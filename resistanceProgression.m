@@ -86,7 +86,7 @@ normalizedZscores = nan(96,4,numWeeks);
 
 for week = 1:numWeeks
     for drug = 1:4
-        normalizedZscores(:,drug,week) = (mean(PIDataFiltered(:,drug,week))-PIDataFiltered(:,drug,week))/std(PIDataFiltered(:,drug,week));
+        normalizedZscores(:,drug,week) = (nanmean(PIDataFiltered(:,drug,week))-PIDataFiltered(:,drug,week))/nanstd(PIDataFiltered(:,drug,week));
     end
 end
 
@@ -94,12 +94,15 @@ end
 %Now make similar matrices but with each well ranked reletive to all other
 %wells that week, where the lowest rank is the highest PI value.
 
-cellLineIndices = nan(96,4,numWeeks);
-cellLineRankings = nan(96,4,numWeeks);
+cellLineIndices = PIDataFiltered;
+cellLineRankings = PIDataFiltered;
 
 for week = 1:numWeeks
     for drug = 1:4
+        loc = find(isnan(PIDataFiltered(:,drug,week)));
         [dummy,cellLineIndices(:,drug,week)] = sort(PIDataFiltered(:,drug,week),'descend');
         cellLineRankings(cellLineIndices(:,drug,week),drug,week) = find(cellLineIndices(:,drug,week));
+        cellLineRankings(loc,drug,week) = nan;
+        cellLineRankings(:,drug,week) = cellLineRankings(:,drug,week) - length(loc);
     end
 end
