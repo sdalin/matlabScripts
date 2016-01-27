@@ -88,7 +88,7 @@ normalizedZscores = nan(96,4,numWeeks);
 
 for week = 1:numWeeks
     for drug = 1:4
-        normalizedZscores(:,drug,week) = (nanmean(PIDataFiltered(:,drug,week))-PIDataFiltered(:,drug,week))/nanstd(PIDataFiltered(:,drug,week));
+        normalizedZscores(:,drug,week) = (PIDataFiltered(:,drug,week)-nanmean(PIDataFiltered(:,drug,week)))/nanstd(PIDataFiltered(:,drug,week));
     end
 end
 
@@ -141,8 +141,6 @@ end
 %highlighted/colored against grey lines of other cell lines.  Dose can be
 %plotted on the right axis as well.
 
-%Color vector so drug 1 is shades of pink, drug 2 shades of red, drug 3
-%sahdes of green, drug 4 sahdes of blue.
 
 
 greyco = zeros(7,3);
@@ -175,7 +173,7 @@ for drug = 1:4
     
     set(gca,'ColorOrder',normalco)
     y3 = squeeze(cellLineRankings(below50LinesNoNAN,drug,:));    
-    sAx = plot(x,y3);
+    sAx = plot(x,y3,'.-','LineWidth',2,'MarkerSize',15);
       
     xlabel('Week')
     ylabel(hAx(1),'Rank') %left y-axis
@@ -185,7 +183,7 @@ for drug = 1:4
     axis(hAx(2),[0 numWeeks+1 0 ceil(max(y2))+1])
 
     hAx(1).YColor = [0 0 0];
-    hAx(2).YColor = [0.4431    0.0431    0.6000];
+    hAx(2).YColor = [1.0000    0.2000    0.2000];
     hAx(1).YLim = [0 100];
     hAx(1).XLim = [0 numWeeks + 1];
     hAx(2).YLim = [0 ceil(max(y2)+(max(y2)/10))];
@@ -197,13 +195,65 @@ for drug = 1:4
     hLine2.LineWidth = 2;
     hLine2.Color = [0 0 0];
     hLine2.Marker = 'o';
-    hLine2.MarkerFaceColor = [0.4431    0.0431    0.6000];
+    hLine2.MarkerFaceColor = [1.0000    0.2000    0.2000];
     hLine2.MarkerEdgeColor = [0 0 0];
-    hLine2.MarkerSize = 5;
+    hLine2.MarkerSize = 6;
     
     title(sprintf(drugNames{drug}));
 
     hold on
 end
+print('ranks','-dpdf')
 
+
+%Now plot z-score vs. week
+figure(2)
+x = 1:numWeeks;
+
+for drug = 1:4
+    subplot(2,2,drug)
+
+    below50LinesNoNAN = below50Lines(~isnan(below50Lines(:,drug)),drug);
+    
+    y1 = squeeze(normalizedZscores(:,drug,:));
+    y2 = squeeze(dose(1,drug,:));
+    
+    set(gca,'ColorOrder',greyco);
+    [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
+    
+    hold on
+    
+    set(gca,'ColorOrder',normalco)
+    y3 = squeeze(normalizedZscores(below50LinesNoNAN,drug,:));    
+    sAx = plot(x,y3,'.-','LineWidth',2,'MarkerSize',15);
+      
+    xlabel('Week')
+    ylabel(hAx(1),'z-score') %left y-axis
+    formatSpec = '[%s] (nM)';
+    ylabel(hAx(2),sprintf(formatSpec,drugNames{drug})) %right y-axis
+
+    axis(hAx(2),[0 numWeeks+1 0 ceil(max(y2))+1])
+
+    hAx(1).YColor = [0 0 0];
+    hAx(2).YColor = [1.0000    0.2000    0.2000];
+    hAx(1).YLim = [min(floor(min(y1)-(min(y1)/10))) max(ceil(max(y1)+(max(y1)/10)))];
+    hAx(1).XLim = [0 numWeeks + 1];
+    hAx(2).YLim = [0 ceil(max(y2)+(max(y2)/10))];
+    hAx(2).XLim = [0 numWeeks + 1];
+    hAx(1).YTick = linspace(min(floor(min(y1)-(min(y1)/10))),max(ceil(max(y1)+(max(y1)/10))),6);
+    hAx(2).YTick = linspace(0,ceil(max(y2)+(max(y2)/10)),6);
+
+    hLine2.LineStyle = '--';
+    hLine2.LineWidth = 2;
+    hLine2.Color = [0 0 0];
+    hLine2.Marker = 'o';
+    hLine2.MarkerFaceColor = [1.0000    0.2000    0.2000];
+    hLine2.MarkerEdgeColor = [0 0 0];
+    hLine2.MarkerSize = 6;
+    
+    title(sprintf(drugNames{drug}));
+
+    hold on
+end
+print('zscores','-dpdf')
 
