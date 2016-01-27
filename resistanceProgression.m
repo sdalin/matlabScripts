@@ -45,11 +45,6 @@ PIData = nan(384,4,numWeeks);
 for file = 3:length(files)
     filename = strcat(dataDir,files(file).name);
     PIData(:,:,file-2) = importPIdata(filename);
-
-%     Drug1PI(:,file-2) = PIData(:,1,file-2);
-%     Drug2PI(:,file-2) = PIData(:,2,file-2);
-%     Drug3PI(:,file-2) = PIData(:,3,file-2);
-%     Drug4PI(:,file-2) = PIData(:,4,file-2);
 end
 
 %%
@@ -83,15 +78,6 @@ for drug = 3:4
     end
 end
 
-% nanRows = any(isnan(Drug1PI),2);
-% Drug1PI(nanRows,:) = [];
-% nanRows = any(isnan(Drug2PI),2);
-% Drug2PI(nanRows,:) = [];
-% nanRows = any(isnan(Drug3PI),2);
-% Drug3PI(nanRows,:) = [];
-% nanRows = any(isnan(Drug4PI),2);
-% Drug4PI(nanRows,:) = [];
-
 %%
 %Now make similar matrices but with each well normalized like a z-score
 %compared to all other wells that week.
@@ -101,10 +87,6 @@ normalizedZscores = nan(96,4,numWeeks);
 for week = 1:numWeeks
     for drug = 1:4
         normalizedZscores(:,drug,week) = (mean(PIDataFiltered(:,drug,week))-PIDataFiltered(:,drug,week))/std(PIDataFiltered(:,drug,week));
-%     Drug1normalized(:,week) = (mean(Drug1PI(:,week))-Drug1PI(:,week))/std(Drug1PI(:,week));
-%     Drug2normalized(:,week) = (mean(Drug2PI(:,week))-Drug2PI(:,week))/std(Drug2PI(:,week));
-%     Drug3normalized(:,week) = (mean(Drug3PI(:,week))-Drug3PI(:,week))/std(Drug3PI(:,week));
-%     Drug4normalized(:,week) = (mean(Drug4PI(:,week))-Drug4PI(:,week))/std(Drug4PI(:,week));
     end
 end
 
@@ -120,13 +102,4 @@ for week = 1:numWeeks
         [dummy,cellLineIndices(:,drug,week)] = sort(PIDataFiltered(:,drug,week),'descend');
         cellLineRankings(cellLineIndices(:,drug,week),drug,week) = find(cellLineIndices(:,drug,week));
     end
-    
-%     [dummy, Drug1indices(:,week)] = sort(Drug1PI(:,week),'descend');
-%     Drug1ranked(Drug1indices(:,week),week) = find(Drug1indices(:,week));
-%     [dummy, Drug2indices(:,week)] = sort(Drug2PI(:,week),'descend');
-%     Drug2ranked(Drug2indices(:,week),week) = find(Drug2indices(:,week));
-%     [dummy, Drug3indices(:,week)] = sort(Drug3PI(:,week),'descend');
-%     Drug3ranked(Drug3indices(:,week),week) = find(Drug3indices(:,week));
-%     [dummy, Drug4indices(:,week)] = sort(Drug4PI(:,week),'descend');
-%     Drug4ranked(Drug4indices(:,week),week) = find(Drug4indices(:,week));
 end
