@@ -26,14 +26,16 @@
 clear all
 
 %Define some variables
-drugName1 = 'Doxorubicin';
-drugName2 = 'Vincristine';
-drugName3 = 'Paclitaxel';
-drugName4 = 'Cisplatin';
+drugNames = {'Doxorubicin','Vincristine','Paclitaxel','Cisplatin'};
+
 
 dataDir = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/Creating Resistant Cells/Round 3/Mondays/';
 
 numWeeks = length(dir(dataDir))-2;
+dose(1,:,1) = [5 6.1 12.2 1700]; %week 1 doses
+dose(1,:,2) = [5 6.5 13.5 3500]; %week 2 doses
+dose(1,:,3) = [6 7 13.5 3500];%week 3 doses
+
 
 %%
 %First import the PI values for each week.  Rows are different wells,
@@ -106,3 +108,72 @@ for week = 1:numWeeks
         cellLineRankings(:,drug,week) = cellLineRankings(:,drug,week) - length(loc);
     end
 end
+
+%%
+%Eventually I'll add something here to select cell lines with last X number
+%of weeks below rank 50, and cell lines with last X number of weeks with
+%decreasing rank.
+
+%Make a matrix with 4 columns, specifying rows of each drug which have rank
+%below 50 for the previous 3 weeks
+
+
+for drug = 1:4
+    dummy = sum(squeeze(cellLineRankings(:,drug,:))<50,2);
+    selectedLines(:,drug) = find(dummy == 3);
+end
+
+
+
+%%
+%Plot rank or z-score vs. week, with selected cell lines from above
+%highlighted/colored against grey lines of other cell lines.  Dose can be
+%plotted on the right axis as well.
+
+%Color vector so drug 1 is shades of pink, drug 2 shades of red, drug 3
+%sahdes of green, drug 4 sahdes of blue.
+
+
+%First plot rank vs. week
+figure(1)
+x = 1:numWeeks;
+
+for plot = 1:4
+    subplot(2,2,plot)
+        y1 = squeeze(cellLineRankings(:,plot,:));
+        y2 = squeeze(dose(1,plot,:));
+        
+        [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
+        
+        xlabel('Week')
+        ylabel(hAx(1),'Rank') %left y-axis
+        formatSpec = '[%s] (nM)';
+        ylabel(hAx(2),sprintf(formatSpec,drugNames{plot})) %right y-axis
+        
+        axis(hAx(2),[0 numWeeks+1 0 ceil(max(y2))+1])
+        
+        hAx(1).YColor = [0 0 0];
+        hAx(2).YColor = [0.4431    0.0431    0.6000];
+        hAx(1).YLim = [0 100];
+        hAx(1).XLim = [0 numWeeks + 1];
+        hAx(2).YLim = [0 ceil(max(y2)+(max(y2)/10))];
+        hAx(2).XLim = [0 numWeeks + 1];
+        hAx(1).YTick = [0 20 40 60 80 100];
+        hAx(2).YTick = linspace(0,ceil(max(y2)+(max(y2)/10)),6);
+        
+        hLine2.LineStyle = '--';
+        hLine2.LineWidth = 2;
+        hLine2.Color = [0 0 0];
+        hLine2.Marker = 'o';
+        hLine2.MarkerFaceColor = [0.4431    0.0431    0.6000];
+        hLine2.MarkerEdgeColor = [0 0 0];
+        hLine2.MarkerSize = 5;
+        
+        hAx(1).ColorOrder = colorVec(:,:,plot);
+        
+        title(sprintf(drugNames{plot}));
+        
+        hold on
+end
+
+
