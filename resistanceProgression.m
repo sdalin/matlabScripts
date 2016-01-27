@@ -160,29 +160,28 @@ normalco = [0    0.4470    0.7410
 figure(1)
 x = 1:numWeeks;
 
-for plot = 1:4
-    subplot(2,2,plot)
+for drug = 1:4
+    subplot(2,2,drug)
 
-    below50LinesNoNAN = below50Lines(~isnan(below50Lines(:,plot)),plot);
+    below50LinesNoNAN = below50Lines(~isnan(below50Lines(:,drug)),drug);
     
-    y1 = squeeze(cellLineRankings(:,plot,:));
-    y2 = squeeze(dose(1,plot,:));
+    y1 = squeeze(cellLineRankings(:,drug,:));
+    y2 = squeeze(dose(1,drug,:));
     
     set(groot,'defaultAxesColorOrder',greyco);
     [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
     
     hold on
     
-    set(groot,'defaultAxesColorOrder',normalco);
-    y3 = squeeze(cellLineRankings(below50LinesNoNAN,plot,:));
-    
+    set(hAx,'ColorOrder',normalco)
+    y3 = squeeze(cellLineRankings(below50LinesNoNAN,drug,:));    
     sAx = plot(x,y3);
     
     
     xlabel('Week')
     ylabel(hAx(1),'Rank') %left y-axis
     formatSpec = '[%s] (nM)';
-    ylabel(hAx(2),sprintf(formatSpec,drugNames{plot})) %right y-axis
+    ylabel(hAx(2),sprintf(formatSpec,drugNames{drug})) %right y-axis
 
     axis(hAx(2),[0 numWeeks+1 0 ceil(max(y2))+1])
 
@@ -199,11 +198,12 @@ for plot = 1:4
     hLine2.LineWidth = 2;
     hLine2.Color = [0 0 0];
     hLine2.Marker = 'o';
+    hLine1.Marker = 'o';
     hLine2.MarkerFaceColor = [0.4431    0.0431    0.6000];
     hLine2.MarkerEdgeColor = [0 0 0];
     hLine2.MarkerSize = 5;
     
-    title(sprintf(drugNames{plot}));
+    title(sprintf(drugNames{drug}));
 
     hold on
 end
