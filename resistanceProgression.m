@@ -168,12 +168,12 @@ for drug = 1:4
     y1 = squeeze(cellLineRankings(:,drug,:));
     y2 = squeeze(dose(1,drug,:));
     
-    set(groot,'defaultAxesColorOrder',greyco);
+    set(gca,'ColorOrder',greyco);
     [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
     
     hold on
     
-    set(hAx,'ColorOrder',normalco)
+    set(gca,'ColorOrder',normalco)
     y3 = squeeze(cellLineRankings(below50LinesNoNAN,drug,:));    
     sAx = plot(x,y3);
       
@@ -197,7 +197,6 @@ for drug = 1:4
     hLine2.LineWidth = 2;
     hLine2.Color = [0 0 0];
     hLine2.Marker = 'o';
-    hLine1.Marker = 'o';
     hLine2.MarkerFaceColor = [0.4431    0.0431    0.6000];
     hLine2.MarkerEdgeColor = [0 0 0];
     hLine2.MarkerSize = 5;
