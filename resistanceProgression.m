@@ -176,8 +176,7 @@ for drug = 1:4
     set(hAx,'ColorOrder',normalco)
     y3 = squeeze(cellLineRankings(below50LinesNoNAN,drug,:));    
     sAx = plot(x,y3);
-    
-    
+      
     xlabel('Week')
     ylabel(hAx(1),'Rank') %left y-axis
     formatSpec = '[%s] (nM)';
