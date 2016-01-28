@@ -29,12 +29,14 @@ clear all
 drugNames = {'Doxorubicin','Vincristine','Paclitaxel','Cisplatin'};
 
 
-dataDir = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/Creating Resistant Cells/Round 3/Mondays/';
+dataDir = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/Creating Resistant Cells/Round 3/Mondays/CSV_Files/';
 
-numWeeks = length(dir(dataDir))-2;
+numWeeks = length(dir(dataDir))-3;
 dose(1,:,1) = [5 6.1 12.2 1700]; %week 1 doses
 dose(1,:,2) = [5 6.5 13.5 3500]; %week 2 doses
 dose(1,:,3) = [6 7 13.5 3500];%week 3 doses
+
+dateLabel = yyyymmdd(datetime);
 
 
 %%
@@ -44,9 +46,9 @@ files = dir(dataDir);
 
 PIData = nan(384,4,numWeeks);
 
-for file = 3:length(files)
+for file = 4:length(files)
     filename = strcat(dataDir,files(file).name);
-    PIData(:,:,file-2) = importPIdata(filename);
+    PIData(:,:,file-3) = importPIdata(filename);
 end
 
 %%
@@ -141,7 +143,7 @@ end
 %highlighted/colored against grey lines of other cell lines.  Dose can be
 %plotted on the right axis as well.
 
-
+positionVectors= [0.1 0.62 0.3 0.3; 0.6 0.62 0.3 0.3; 0.1 0.1 0.3 0.3; 0.6 0.1 0.3 0.3];
 
 greyco = zeros(7,3);
 greyco(:) = 0.8;
@@ -156,10 +158,11 @@ normalco = [0    0.4470    0.7410
 
 %First plot rank vs. week
 figure(1)
+clf
 x = 1:numWeeks;
 
 for drug = 1:4
-    subplot(2,2,drug)
+    subplot(2,2,drug,'Position',positionVectors(drug,:))
 
     below50LinesNoNAN = below50Lines(~isnan(below50Lines(:,drug)),drug);
     
@@ -203,15 +206,17 @@ for drug = 1:4
 
     hold on
 end
-print('ranks','-dpdf')
+formatSpec = '%s../%d_Ranks';
+print(sprintf(formatSpec,dataDir,dateLabel),'-dpdf');
 
 
 %Now plot z-score vs. week
 figure(2)
+clf
 x = 1:numWeeks;
 
 for drug = 1:4
-    subplot(2,2,drug)
+    subplot(2,2,drug,'Position',positionVectors(drug,:))
 
     below50LinesNoNAN = below50Lines(~isnan(below50Lines(:,drug)),drug);
     
@@ -236,11 +241,14 @@ for drug = 1:4
 
     hAx(1).YColor = [0 0 0];
     hAx(2).YColor = [1.0000    0.2000    0.2000];
-    hAx(1).YLim = [min(floor(min(y1)-(min(y1)/10))) max(ceil(max(y1)+(max(y1)/10)))];
+    
+    zscoreLimit = max(abs(min(floor(min(y1)-abs((min(y1)/10))))),max(ceil(max(y1)+(max(y1)/10))));
+    
+    hAx(1).YLim = [-zscoreLimit zscoreLimit];
     hAx(1).XLim = [0 numWeeks + 1];
     hAx(2).YLim = [0 ceil(max(y2)+(max(y2)/10))];
     hAx(2).XLim = [0 numWeeks + 1];
-    hAx(1).YTick = linspace(min(floor(min(y1)-(min(y1)/10))),max(ceil(max(y1)+(max(y1)/10))),6);
+    hAx(1).YTick = linspace(-zscoreLimit,zscoreLimit,6);
     hAx(2).YTick = linspace(0,ceil(max(y2)+(max(y2)/10)),6);
 
     hLine2.LineStyle = '--';
@@ -255,5 +263,6 @@ for drug = 1:4
 
     hold on
 end
-print('zscores','-dpdf')
+formatSpec = '%s../%d_Z-scores';
+print(sprintf(formatSpec,dataDir,dateLabel),'-dpdf');
 
