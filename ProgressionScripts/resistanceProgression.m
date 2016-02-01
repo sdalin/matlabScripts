@@ -14,6 +14,9 @@
 %case, column 3 is PI value for all wells, columns 4-7 are PI values for
 %each drug with NaN's for wells that don't contain that drug.
 
+%Further in this file you can define 'resWeeks' as the number of weeks you
+%want to have plotted cell lines be decreasing in rank or be below rank 50.
+
 %Outputs are: 4 csv's (one per drug) with the following data: 96-well
 %plate ID's, PI value of each well over each week and average killing each week.
 %Another similar csv with ranks instead of PI value, where lowest rank is
@@ -28,6 +31,9 @@ clear all
 %Define some variables
 drugNames = {'Doxorubicin','Vincristine','Paclitaxel','Cisplatin'};
 
+%Number of weeks below rank 50 or decreasing in rank that plotted cell
+%lines should be.
+resWeeks = 3;
 
 dataDir = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/Creating Resistant Cells/Round 3/Mondays/CSV_Files/';
 
@@ -35,8 +41,6 @@ numWeeks = length(dir(dataDir))-3;
 dose(1,:,1) = [5 6.1 12.2 1700]; %week 1 doses
 dose(1,:,2) = [5 6.5 13.5 3500]; %week 2 doses
 dose(1,:,3) = [6 7 13.5 3500];%week 3 doses
-
-dateLabel = yyyymmdd(datetime);
 
 
 %%
@@ -116,18 +120,20 @@ end
 %below 50 for the previous resWeeks weeks
 
 below50Lines = [];
-resWeeks = 3;
 
 for drug = 1:4
-    dummy = sum(squeeze(cellLineRankings(:,drug,:))<50,2);
+    interestingCellLineRankings = cellLineRankings(:,:,numWeeks-resWeeks+1:end);
+    dummy = sum(squeeze(interestingCellLineRankings(:,drug,:))<50,2);
     temporary = find(dummy == resWeeks);
-    
-    if length(temporary) > length(below50Lines)
-        numExtraRows = length(temporary) - length(below50Lines);
-        below50Lines = [below50Lines;nan(numExtraRows,drug-1)];
-    elseif length(temporary) < length(below50Lines)
-        numExtraRows = length(below50Lines) - length(temporary);
-        temporary = [temporary;nan(numExtraRows,1)];
+
+    if ~isempty(below50Lines)
+        if length(temporary) > length(below50Lines)
+            numExtraRows = length(temporary) - length(below50Lines);
+            below50Lines = [below50Lines;nan(numExtraRows,drug-1)];
+        elseif length(temporary) < length(below50Lines)
+            numExtraRows = length(below50Lines) - length(temporary);
+            temporary = [temporary;nan(numExtraRows,1)];
+        end
     end
     
     below50Lines = [below50Lines, temporary];
@@ -141,15 +147,18 @@ decreasingLines = [];
 
 for drug = 1:4
     cellLineDiffs = diff(cellLineRankings(:,drug,:),1,3);
-    dummy = sum(squeeze(cellLineDiffs)>0);
+    interestingCellLineDiffs = cellLineDiffs(:,:,numWeeks-resWeeks+1:end);
+    dummy = sum(squeeze(interestingCellLineDiffs)<0,2);    
     temporary = find(dummy == resWeeks-1);
     
-    if length(temporary) > length(decreasingLines)
-        numExtraRows = length(temporary) - length(decreasingLines);
-        below50Lines = [decreasingLines;nan(numExtraRows,drug-1)];
-    elseif length(temporary) < length(decreasingLines)
-        numExtraRows = length(decreasingLines) - length(temporary);
-        temporary = [temporary;nan(numExtraRows,1)];
+    if ~isempty(decreasingLines)
+        if length(temporary) > length(decreasingLines)
+            numExtraRows = length(temporary) - length(decreasingLines);
+            decreasingLines = [decreasingLines;nan(numExtraRows,drug-1)];
+        elseif length(temporary) < length(decreasingLines)
+            numExtraRows = length(decreasingLines) - length(temporary);
+            temporary = [temporary;nan(numExtraRows,1)];
+        end
     end
     
     decreasingLines = [decreasingLines, temporary];
