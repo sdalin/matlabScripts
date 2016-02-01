@@ -5,6 +5,8 @@
 
 function Plot = plotProgression(numWeeks,dose,drugNames,dataDir,linesToPlot,cellLineRankings,normalizedZscores,selection)
 
+dateLabel = yyyymmdd(datetime);
+
 positionVectors= [0.1 0.62 0.3 0.3; 0.6 0.62 0.3 0.3; 0.1 0.1 0.3 0.3; 0.6 0.1 0.3 0.3];
 
 greyco = zeros(7,3);
@@ -27,11 +29,14 @@ for drug = 1:4
     subplot(2,2,drug,'Position',positionVectors(drug,:))
 
     linesToPlotNoNAN = linesToPlot(~isnan(linesToPlot(:,drug)),drug);
-    
+    if isempty(linesToPlotNoNAN)
+        continue
+    end
+        
     y1 = squeeze(cellLineRankings(:,drug,:));
     y2 = squeeze(dose(1,drug,:));
     
-    set(gca,'ColorOrder',greyco);
+    set(gca,'defaultAxesColorOrder',greyco);
     [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
     
     hold on
@@ -81,11 +86,14 @@ for drug = 1:4
     subplot(2,2,drug,'Position',positionVectors(drug,:))
 
     linesToPlotNoNAN = linesToPlot(~isnan(linesToPlot(:,drug)),drug);
+    if isempty(linesToPlotNoNAN)
+        continue
+    end
     
     y1 = squeeze(normalizedZscores(:,drug,:));
     y2 = squeeze(dose(1,drug,:));
     
-    set(gca,'ColorOrder',greyco);
+    set(gca,'defaultAxesColorOrder',greyco);
     [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
     
     hold on
