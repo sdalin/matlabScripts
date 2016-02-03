@@ -15,7 +15,9 @@
 %each drug with NaN's for wells that don't contain that drug.
 
 %Further in this file you can define 'resWeeks' as the number of weeks you
-%want to have plotted cell lines be decreasing in rank or be below rank 50.
+%want to have plotted cell lines be decreasing in rank or be below rank
+%50. You also must define the doses of each drug each week, all these are
+%in the first module.
 
 %Outputs are: 4 csv's (one per drug) with the following data: 96-well
 %plate ID's, PI value of each well over each week and average killing each week.
@@ -33,14 +35,17 @@ drugNames = {'Doxorubicin','Vincristine','Paclitaxel','Cisplatin'};
 
 %Number of weeks below rank 50 or decreasing in rank that plotted cell
 %lines should be.
-resWeeks = 3;
+resWeeks = 4;
 
 dataDir = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/Creating Resistant Cells/Round 3/Mondays/CSV_Files/';
+
+dateLabel = yyyymmdd(datetime);
 
 numWeeks = length(dir(dataDir))-3;
 dose(1,:,1) = [5 6.1 12.2 1700]; %week 1 doses
 dose(1,:,2) = [5 6.5 13.5 3500]; %week 2 doses
 dose(1,:,3) = [6 7 13.5 3500];%week 3 doses
+dose(1,:,4) = [7.5 10 17.5 3600];%week 4 doses
 
 
 %%
@@ -148,7 +153,7 @@ decreasingLines = [];
 for drug = 1:4
     cellLineDiffs = diff(cellLineRankings(:,drug,:),1,3);
     interestingCellLineDiffs = cellLineDiffs(:,:,numWeeks-resWeeks+1:end);
-    dummy = sum(squeeze(interestingCellLineDiffs)<0,2);    
+    dummy = sum(squeeze(interestingCellLineDiffs)<=0,2);    
     temporary = find(dummy == resWeeks-1);
     
     if ~isempty(decreasingLines)
@@ -164,6 +169,32 @@ for drug = 1:4
     decreasingLines = [decreasingLines, temporary];
 end
     
+%%
+%Create lists of which cell lines are below rank 50 or decreasing in rank
+%for the previous resWeeks for each drug. Write these into two csv files.
+
+listbelow50Lines = cell(size(below50Lines));
+[row,column] = ind2sub([8,12],below50Lines);
+asciiCharsRows = char(row+'A'-1);
+    for cellLine = 1:size(below50Lines,1)
+        for drug = 1:4
+            listbelow50Lines{cellLine,drug} = cellstr([asciiCharsRows(cellLine,drug) num2str(column(cellLine,drug))]); 
+        end
+    end
+listbelow50Lines = [drugNames;listbelow50Lines];
+
+    
+listDecreasingLines = cell(size(decreasingLines));
+[row,column] = ind2sub([8,12],decreasingLines);
+asciiCharsRows = char(row+'A'-1);
+
+listDecreasingLines(1,:) = drugNames;
+    for cellLine = 1:size(decreasingLines,1)
+        for drug = 1:4
+            listDecreasingLines{cellLine,drug} = cellstr([asciiCharsRows(cellLine,drug) num2str(column(cellLine,drug))]); 
+        end
+    end
+listDecreasingLines = [drugNames;listDecreasingLines];
 
 %%
 %Plot everything first for below50Lines

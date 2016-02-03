@@ -42,7 +42,12 @@ for drug = 1:4
     hold on
     
     set(gca,'ColorOrder',normalco)
-    y3 = squeeze(cellLineRankings(linesToPlotNoNAN,drug,:));    
+    y3 = squeeze(cellLineRankings(linesToPlotNoNAN,drug,:)); 
+
+    if size(y3,1) == size(y3,2)
+        y3 = transpose(y3);
+    end
+    
     sAx = plot(x,y3,'.-','LineWidth',2,'MarkerSize',15);
       
     xlabel('Week')
@@ -100,6 +105,9 @@ for drug = 1:4
     
     set(gca,'ColorOrder',normalco)
     y3 = squeeze(normalizedZscores(linesToPlotNoNAN,drug,:));    
+    if size(y3,1) == size(y3,2)
+        y3 = transpose(y3);
+    end
     sAx = plot(x,y3,'.-','LineWidth',2,'MarkerSize',15);
       
     xlabel('Week')
