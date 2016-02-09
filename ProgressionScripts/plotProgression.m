@@ -27,7 +27,7 @@ x = 1:numWeeks;
 
 for drug = 1:4
     subplot(2,2,drug,'Position',positionVectors(drug,:))
-
+    
     linesToPlotNoNAN = linesToPlot(~isnan(linesToPlot(:,drug)),drug);
     if isempty(linesToPlotNoNAN)
         continue
@@ -35,8 +35,8 @@ for drug = 1:4
         
     y1 = squeeze(cellLineRankings(:,drug,:));
     y2 = squeeze(dose(1,drug,:));
-    
-    set(gca,'defaultAxesColorOrder',greyco);
+
+    set(groot,'defaultAxesColorOrder',greyco);
     [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
     
     hold on
@@ -98,7 +98,7 @@ for drug = 1:4
     y1 = squeeze(normalizedZscores(:,drug,:));
     y2 = squeeze(dose(1,drug,:));
     
-    set(gca,'defaultAxesColorOrder',greyco);
+    set(groot,'defaultAxesColorOrder',greyco);
     [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
     
     hold on

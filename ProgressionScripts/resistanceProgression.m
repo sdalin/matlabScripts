@@ -128,14 +128,14 @@ below50Lines = [];
 
 for drug = 1:4
     interestingCellLineRankings = cellLineRankings(:,:,numWeeks-resWeeks+1:end);
-    dummy = sum(squeeze(interestingCellLineRankings(:,drug,:))<50,2);
+    dummy = sum(squeeze(interestingCellLineRankings(:,drug,:))<=50,2);
     temporary = find(dummy == resWeeks);
 
     if ~isempty(below50Lines)
-        if length(temporary) > length(below50Lines)
+        if size(temporary,1) > size(below50Lines,1)
             numExtraRows = length(temporary) - length(below50Lines);
             below50Lines = [below50Lines;nan(numExtraRows,drug-1)];
-        elseif length(temporary) < length(below50Lines)
+        elseif size(temporary,1) < size(below50Lines,1)
             numExtraRows = length(below50Lines) - length(temporary);
             temporary = [temporary;nan(numExtraRows,1)];
         end
@@ -157,12 +157,12 @@ for drug = 1:4
     temporary = find(dummy == resWeeks-1);
     
     if ~isempty(decreasingLines)
-        if length(temporary) > length(decreasingLines)
+        if size(temporary,1) > size(decreasingLines,1)
             numExtraRows = length(temporary) - length(decreasingLines);
             decreasingLines = [decreasingLines;nan(numExtraRows,drug-1)];
-        elseif length(temporary) < length(decreasingLines)
+        elseif size(temporary,1) < size(decreasingLines,1)
             numExtraRows = length(decreasingLines) - length(temporary);
-            temporary = [temporary;nan(numExtraRows,1)];
+            temporary = [temporary;nan(numExtraRows,1)];           
         end
     end
     
@@ -174,11 +174,11 @@ end
 %for the previous resWeeks for each drug. Write these into two csv files.
 
 listbelow50Lines = cell(size(below50Lines));
-[row,column] = ind2sub([8,12],below50Lines);
-asciiCharsRows = char(row+'A'-1);
+[row,column] = ind2sub([12,8],below50Lines);
+asciiCharsCols = char(column+'A'-1);
     for cellLine = 1:size(below50Lines,1)
         for drug = 1:4
-            listbelow50Lines{cellLine,drug} = cellstr([asciiCharsRows(cellLine,drug) num2str(column(cellLine,drug))]); 
+            listbelow50Lines{cellLine,drug} = cellstr([asciiCharsCols(cellLine,drug) num2str(row(cellLine,drug))]); 
         end
     end
 listbelow50Lines = [drugNames;listbelow50Lines];
@@ -186,12 +186,12 @@ listbelow50Lines = [drugNames;listbelow50Lines];
     
 listDecreasingLines = cell(size(decreasingLines));
 [row,column] = ind2sub([8,12],decreasingLines);
-asciiCharsRows = char(row+'A'-1);
+asciiCharsCols = char(column+'A'-1);
 
 listDecreasingLines(1,:) = drugNames;
     for cellLine = 1:size(decreasingLines,1)
         for drug = 1:4
-            listDecreasingLines{cellLine,drug} = cellstr([asciiCharsRows(cellLine,drug) num2str(column(cellLine,drug))]); 
+            listDecreasingLines{cellLine,drug} = cellstr([asciiCharsCols(cellLine,drug) num2str(row(cellLine,drug))]); 
         end
     end
 listDecreasingLines = [drugNames;listDecreasingLines];
