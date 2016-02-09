@@ -35,7 +35,7 @@ drugNames = {'Doxorubicin','Vincristine','Paclitaxel','Cisplatin'};
 
 %Number of weeks below rank 50 or decreasing in rank that plotted cell
 %lines should be.
-resWeeks = 4;
+resWeeks = 5;
 
 dataDir = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/Creating Resistant Cells/Round 3/Mondays/CSV_Files/';
 
@@ -46,6 +46,7 @@ dose(1,:,1) = [5 6.1 12.2 1700]; %week 1 doses
 dose(1,:,2) = [5 6.5 13.5 3500]; %week 2 doses
 dose(1,:,3) = [6 7 13.5 3500];%week 3 doses
 dose(1,:,4) = [7.5 10 17.5 3600];%week 4 doses
+dose(1,:,5) = [10 12 16 4000];%week 5 doses
 
 
 %%
@@ -133,10 +134,10 @@ for drug = 1:4
 
     if ~isempty(below50Lines)
         if size(temporary,1) > size(below50Lines,1)
-            numExtraRows = length(temporary) - length(below50Lines);
+            numExtraRows = size(temporary,1) - size(below50Lines,1);
             below50Lines = [below50Lines;nan(numExtraRows,drug-1)];
         elseif size(temporary,1) < size(below50Lines,1)
-            numExtraRows = length(below50Lines) - length(temporary);
+            numExtraRows = size(below50Lines,1) - size(temporary,1);
             temporary = [temporary;nan(numExtraRows,1)];
         end
     end
@@ -158,10 +159,10 @@ for drug = 1:4
     
     if ~isempty(decreasingLines)
         if size(temporary,1) > size(decreasingLines,1)
-            numExtraRows = length(temporary) - length(decreasingLines);
+            numExtraRows = size(temporary,1) - size(decreasingLines,1);
             decreasingLines = [decreasingLines;nan(numExtraRows,drug-1)];
         elseif size(temporary,1) < size(decreasingLines,1)
-            numExtraRows = length(decreasingLines) - length(temporary);
+            numExtraRows = size(decreasingLines,1) - size(temporary,1);
             temporary = [temporary;nan(numExtraRows,1)];           
         end
     end
@@ -171,7 +172,7 @@ end
     
 %%
 %Create lists of which cell lines are below rank 50 or decreasing in rank
-%for the previous resWeeks for each drug. Write these into two csv files.
+% for the previous resWeeks for each drug. Write these into two csv files.
 
 listbelow50Lines = cell(size(below50Lines));
 [row,column] = ind2sub([12,8],below50Lines);
@@ -185,7 +186,7 @@ listbelow50Lines = [drugNames;listbelow50Lines];
 
     
 listDecreasingLines = cell(size(decreasingLines));
-[row,column] = ind2sub([8,12],decreasingLines);
+[row,column] = ind2sub([12,8],decreasingLines);
 asciiCharsCols = char(column+'A'-1);
 
 listDecreasingLines(1,:) = drugNames;
