@@ -28,7 +28,7 @@ T = clusterdata(IC50data,1);
 
 %%
 %Heiraricical Clustering
-eucD = pdist(IC50data,'euclidean');
+eucD = pdist(data,'euclidean');
 clustTreeEuc = linkage(eucD,'average');
 
 cophenet(clustTreeEuc,eucD);
@@ -39,7 +39,8 @@ h_gca.TickDir = 'out';
 h_gca.TickLength = [.002 0];
 h_gca.XTickLabel = [];
 
-CGobj = clustergram(IC50data,'RowLabels',RowLabels,'ColumnLabels',ColumnLabels,'Colormap',redbluecmap);
+CGobj = clustergram(data,'RowLabels',RowLabels,'ColumnLabels',ColumnLabels,'Colormap',redbluecmap,'Symmetric',true,'ColumnLabelsRotate',0);
+
 
 %%
 %Some dimensional reduction to get a look at these suckers

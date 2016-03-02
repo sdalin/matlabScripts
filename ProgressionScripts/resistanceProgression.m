@@ -47,7 +47,9 @@ dose(1,:,2) = [5 6.5 13.5 3500]; %week 2 doses
 dose(1,:,3) = [6 7 13.5 3500];%week 3 doses
 dose(1,:,4) = [7.5 10 17.5 3600];%week 4 doses
 dose(1,:,5) = [10 12 16 4000];%week 5 doses
-
+dose(1,:,6) = [12.5 10.5 16.5 4150]; %week 6 doses
+dose(1,:,7) = [12.5 10.5 16.25 4400]; %week 7 doses
+dose(1,:,8) = [15 11 16.5 4750]; %week 8 doses
 
 %%
 %First import the PI values for each week.  Rows are different wells,
@@ -91,6 +93,10 @@ for drug = 3:4
         row96 = row96 +12;
     end
 end
+
+%Save PI data to a file in order to make violin plots in R
+formatSpec = '%s../PIDataFiltered.mat';
+save(sprintf(formatSpec,dataDir),PIDataFiltered)
 
 %%
 %Now make similar matrices but with each well normalized like a z-score
@@ -199,7 +205,8 @@ listDecreasingLines = [drugNames;listDecreasingLines];
 
 %%
 %Plot everything first for below50Lines
-Plot = plotProgression(numWeeks,dose,drugNames,dataDir,below50Lines,cellLineRankings,normalizedZscores,'below50');
+Plot = plotProgression(numWeeks,dose,drugNames,dataDir,below50Lines,cellLineRankings,normalizedZscores,PIDataFiltered,'below50');
 
 %Plot everything now for decreasingLines
-Plot = plotProgression(numWeeks,dose,drugNames,dataDir,decreasingLines,cellLineRankings,normalizedZscores,'decreasing');
+Plot = plotProgression(numWeeks,dose,drugNames,dataDir,decreasingLines,cellLineRankings,normalizedZscores,PIDataFiltered,'decreasing');
+
