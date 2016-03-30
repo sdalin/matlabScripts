@@ -50,6 +50,7 @@ dose(1,:,5) = [10 12 16 4000];%week 5 doses
 dose(1,:,6) = [12.5 10.5 16.5 4150]; %week 6 doses
 dose(1,:,7) = [12.5 10.5 16.25 4400]; %week 7 doses
 dose(1,:,8) = [15 11 16.5 4750]; %week 8 doses
+dose(1,:,9) = [20 11.5 17.5 8500]; %week 9 doses
 
 %%
 %First import the PI values for each week.  Rows are different wells,
@@ -94,9 +95,6 @@ for drug = 3:4
     end
 end
 
-%Save PI data to a file in order to make violin plots in R
-formatSpec = '%s../PIDataFiltered.mat';
-save(sprintf(formatSpec,dataDir),PIDataFiltered)
 
 %%
 %Now make similar matrices but with each well normalized like a z-score
@@ -162,6 +160,10 @@ for drug = 1:4
     interestingCellLineDiffs = cellLineDiffs(:,:,numWeeks-resWeeks+1:end);
     dummy = sum(squeeze(interestingCellLineDiffs)<=0,2);    
     temporary = find(dummy == resWeeks-1);
+    
+    if isempty(temporary) == 1
+        temporary = nan;
+    end
     
     if ~isempty(decreasingLines)
         if size(temporary,1) > size(decreasingLines,1)
