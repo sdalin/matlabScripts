@@ -20,23 +20,20 @@
 
 %/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/SSC Heterogeneity DRCs/All CSV Files
 
-function [bigstruct,drugnames,pvalByConc,cellNumByConc,concbyDrug,plate] = DRCs150420(filename,endRow,hairpin)
+function [bigstruct,cellLineNames,pvalByConc,cellNumByConc,concbyDrug,plate] = DRCs150420(filename,endRow,hairpin)
     filename = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/SSC Heterogeneity DRCs/All CSV Files/160511_SSC_DRC_Fixed.csv';
     endRow = 1933;
     %import first two columns of spreadsheet as a cell (these have
     %information on what each well is)
     startRow = 2;
-    firstthreecolumns = importfirsttwotocell(filename, startRow, endRow);
+    firsttwocolumns = importfirsttwotocell(filename, startRow, endRow);
     
     %import last two columns of csv as a matrix (these are PI-% and cell #
     %respectively)
-    startRow = startRow + 2;
-    lastsix = importlastsixtomat(filename, startRow, endRow);
-    lastsix(isnan(lastsix))= 0; %so that NaN's don't mess things up
-    lastsix(:,[2,3])=[]; %Remove the unneeded two columns
+    lasttwo = importlasttwotomat(filename, startRow, endRow);
     
     %finds locations of new plates
-    indexnewplate = strfind(firstthreecolumns(:,1),'Plate');
+    indexnewplate = strfind(firsttwocolumns(:,1),'Plate');
     indexnewplate = find(~cellfun(@isempty,indexnewplate));
     
     %establish plate boundaries
@@ -49,70 +46,59 @@ function [bigstruct,drugnames,pvalByConc,cellNumByConc,concbyDrug,plate] = DRCs1
         ii = ii+1;
     end
     platebounds(platenum,1) = indexnewplate(platenum)+2;
-    platebounds(platenum,2) = length(firstthreecolumns);
+    platebounds(platenum,2) = length(firsttwocolumns);
 
     %create structure where each plate has its own field consisting of last
-    %three columns
+    %two columns
     %first have to remove "" spaces and :
-    nospaces = strrep(firstthreecolumns,' ','');
+    nospaces = strrep(firsttwocolumns,' ','');
     noquotesnospaces = strrep(nospaces,'"','');
     allgone = strrep(noquotesnospaces,':','');
     k = 2;
-    bigstruct = struct(allgone{indexnewplate(1)},lastsix(platebounds(1,1):platebounds(1,2),1:4));
+    bigstruct = struct(allgone{indexnewplate(1)},lasttwo(platebounds(1,1):platebounds(1,2),1:2));
     while k < platenum + 1
-        bigstruct = setfield(bigstruct,allgone{indexnewplate(k),1},lastsix(platebounds(k,1):platebounds(k,2),1:4));
+        bigstruct = setfield(bigstruct,allgone{indexnewplate(k),1},lasttwo(platebounds(k,1):platebounds(k,2),1:2));
         k = k+1;
     end
     
-    %find location of hairpin plate in question.  Everywhere it says 'MLS'
-    %below really refers to the hairpin in question
+    %For each plate, normalize cell # in each column to the average of rows
+    %H & P, which had DMSO.
     
-    %indexMLSplate is only the location of the plate name in the entire CSV
-    indexMLSplate = strfind(firstthreecolumns(:,1),char(hairpin));
-    %this next line tests if each entry of indexMLSplate (which has no
-    %entries exept the row containing the word 'MLS' in firstthreecolumns)
-    %is empty and puts a 1 if its got something, then find outputs that one
-    %index, and that is where the MLS plate starts.
-    indexMLSplate = find(~cellfun(@isempty,indexMLSplate));
+    %Normalize each column of each plate to average of row H & P which had
+    %DMSO
     
-    %finds locations of untreated wells
-    %first indexes for each type of untreated the concatenates them then
-    %sorts them
-    indexDMSOplate = strfind(firstthreecolumns(:,2),'DMSO');
-    indexDMSOplate = find(~cellfun(@isempty,indexDMSOplate));
-    indexWaterplate = strfind(firstthreecolumns(:,2),'Water');
-    indexWaterplate = find(~cellfun(@isempty,indexWaterplate));
-    indexEtohplate = strfind(firstthreecolumns(:,2),'EtOH');
-    indexEtohplate = find(~cellfun(@isempty,indexEtohplate));
-    indexPosplate = strfind(firstthreecolumns(:,2),'Positive');
-    indexPosplate = find(~cellfun(@isempty,indexPosplate));
-    indexUT = [indexDMSOplate;indexWaterplate;indexEtohplate;indexPosplate];
-    sortedindexUT = sortrows(indexUT);
-    %sortedindexUT is for the entire csv file
+    k = 2;
+    while k < platenum + 1
+        %here write a for loop or a while loop that counts off each
+        %384-well column and divides each value by the average.
+        
+        %Another possibility would be to export each plate (each leaf of
+        %the structure) into a matrix, then re-shape into 16x24, then
+        %normalize then re-shape again into column then store into
+        %bigstructNormed.
+        bigstructNormed.(allgone{indexnewplate(k),1}) = bigstruct.(allgone{indexnewplate(k),1})(:,2) / 
+        
+    
 
-    %Extract MLS cell numbers and concentrations
-    MLScellnum = bigstruct.(allgone{indexMLSplate(1),1})(:,4);
-    MLSconc = bigstruct.(allgone{indexMLSplate,1})(:,1);
+    %Extract all cell numbers and concentrations.  Each row of these two
+    %matrices is equivalent to an entire plate.
+    k = 2;
+    while k < platenum + 1
+        cellNum = bigstruct.(allgone{indexnewplate(k),1})(:,2);
+        MLSconc = bigstruct.(allgone{indexnewplate(k),1})(:,1);
+        k = k + 1
+    end
 
-    
-    %identifies where in the plate are the non-UT wells
-    UTlowerindMLS = (sortedindexUT <= indexMLSplate+2+length(bigstruct.(allgone{indexMLSplate(1),1})(:,2))); %cuts off higher indices
-    UTplateindMLS = (sortedindexUT(UTlowerindMLS) >= indexMLSplate+2); %then cuts lower indices
-    UTwellsMLSentirecsv = sortedindexUT(UTplateindMLS);
-    UTwellsjustMLS = UTwellsMLSentirecsv-(indexMLSplate+1);
-    nonUTlog = true(length(bigstruct.(allgone{indexMLSplate(1),1})(:,1)),1);
-    nonUTlog(UTwellsjustMLS) = 0; %nonUTlog is a logical array of non UT well location
-    %where UT wells are 0 (false) and treatment wells are 1 (true)
+   
    
     %Extract drugnames with more than cellcut cells - for DRCs we want all
     %wells
     cellcut=0;
-    LDlog = MLScellnum > cellcut;
-    LDlog = and(LDlog,nonUTlog);
+    LDlog = cellNum > cellcut;
     
     namelog = logical([0;0;0;LDlog]);
-    drugnames = allgone(namelog,3); %cant use allgone for names because it has header
-    drugnames = unique(drugnames);
+    cellLineNames = allgone(namelog,3); %cant use allgone for names because it has header
+    cellLineNames = unique(cellLineNames);
     
     plate = allgone{indexnewplate(1)};
     plate2 = plate;
@@ -127,12 +113,12 @@ function [bigstruct,drugnames,pvalByConc,cellNumByConc,concbyDrug,plate] = DRCs1
     
     %Find the PI values and cell number and concentrations of each drug in drugnames for each of the
     %concentrations specified
-    pvalByConc = zeros(length(drugnames),length(concentrations));
-    cellNumByConc = zeros(length(drugnames),length(concentrations));
-    concbyDrug = zeros(length(drugnames),length(concentrations));
-    for drug = 1:length(drugnames)
+    pvalByConc = zeros(length(cellLineNames),length(concentrations));
+    cellNumByConc = zeros(length(cellLineNames),length(concentrations));
+    concbyDrug = zeros(length(cellLineNames),length(concentrations));
+    for drug = 1:length(cellLineNames)
         %first get the index of where this drug is
-        drugIndex = strcmp(allgone(indexMLSplate+2:platebounds(find(platebounds(:,1)==indexMLSplate+2),2),3),drugnames(drug));
+        drugIndex = strcmp(allgone(indexMLSplate+2:platebounds(find(platebounds(:,1)==indexMLSplate+2),2),3),cellLineNames(drug));
         %Next find the concentrations this drug was tested with
         drugConcs = sort(MLSconc(drugIndex),'ascend');
         concbyDrug(drug,:) = drugConcs';
