@@ -51,6 +51,11 @@ dose(1,:,6) = [12.5 10.5 16.5 4150]; %week 6 doses
 dose(1,:,7) = [12.5 10.5 16.25 4400]; %week 7 doses
 dose(1,:,8) = [15 11 16.5 4750]; %week 8 doses
 dose(1,:,9) = [20 11.5 17.5 8500]; %week 9 doses
+dose(1,:,10) = [25 12.5 18.6 11000]; %week 10 doses **This week had a 4 day selection rather than 3 days (leitan wedding!)
+dose(1,:,11) = [30 15 21 15000]; %week 11 doses (really getting there omg)
+dose(1,:,12) = [35 16 21.5 15000]; %week 12 doses
+dose(1,:,13) = [40 17.5 22.5 15000]; %week 13 doses (Jaime FACSd)
+dose(1,:,14) = [0 0 24 15250]; %week 14 doses - dox, vin are currently dead.  I'll fill in this data later.
 
 %%
 %First import the PI values for each week.  Rows are different wells,
@@ -136,7 +141,7 @@ for drug = 1:4
     dummy = sum(squeeze(interestingCellLineRankings(:,drug,:))<=50,2);
     temporary = find(dummy == resWeeks);
 
-    if ~isempty(below50Lines)
+    %if ~isempty(below50Lines)
         if size(temporary,1) > size(below50Lines,1)
             numExtraRows = size(temporary,1) - size(below50Lines,1);
             below50Lines = [below50Lines;nan(numExtraRows,drug-1)];
@@ -144,7 +149,7 @@ for drug = 1:4
             numExtraRows = size(below50Lines,1) - size(temporary,1);
             temporary = [temporary;nan(numExtraRows,1)];
         end
-    end
+   % end
     
     below50Lines = [below50Lines, temporary];
 end
@@ -165,7 +170,7 @@ for drug = 1:4
         temporary = nan;
     end
     
-    if ~isempty(decreasingLines)
+    %if ~isempty(decreasingLines)
         if size(temporary,1) > size(decreasingLines,1)
             numExtraRows = size(temporary,1) - size(decreasingLines,1);
             decreasingLines = [decreasingLines;nan(numExtraRows,drug-1)];
@@ -173,7 +178,7 @@ for drug = 1:4
             numExtraRows = size(decreasingLines,1) - size(temporary,1);
             temporary = [temporary;nan(numExtraRows,1)];           
         end
-    end
+   % end
     
     decreasingLines = [decreasingLines, temporary];
 end
