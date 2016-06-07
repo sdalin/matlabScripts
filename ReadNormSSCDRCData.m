@@ -67,8 +67,15 @@ function [bigstruct,cellLineNames,pvalByConc,cellNumByConc,concbyDrug,plate] = D
     %Normalize each column of each plate to average of row H & P which had
     %DMSO
     
-    k = 2;
-    while k < platenum + 1
+    for k = 1:platenum
+        for cellLine = 1:20
+            DMSOs = [bigstruct.(allgone{indexnewplate(k),1})(8 + (16 * (cellLine - 1)),2),bigstruct.(allgone{indexnewplate(k),1})(16 + (16 * (cellLine - 1)),2)];
+            DMSOmean = mean(DMSOs);
+            bigstructNormed.(allgone{indexnewplate(k),1})(1 + (16 * (cellLine - 1)):16 + (16 * (cellLine - 1)),1) = bigstruct.(allgone{indexnewplate(k),1})(1 + (16 * (cellLine - 1)):16 + (16 * (cellLine - 1)),2)./DMSOmean;
+        end
+    end
+        
+        
         %here write a for loop or a while loop that counts off each
         %384-well column and divides each value by the average.
         
@@ -76,7 +83,7 @@ function [bigstruct,cellLineNames,pvalByConc,cellNumByConc,concbyDrug,plate] = D
         %the structure) into a matrix, then re-shape into 16x24, then
         %normalize then re-shape again into column then store into
         %bigstructNormed.
-        bigstructNormed.(allgone{indexnewplate(k),1}) = bigstruct.(allgone{indexnewplate(k),1})(:,2) / 
+        %bigstructNormed.(allgone{indexnewplate(k),1}) = bigstruct.(allgone{indexnewplate(k),1})(:,2);
         
     
 
