@@ -5,8 +5,6 @@
 %bigstructNormed has normalized cell counts of each plate in alpha order.  Columns of each plate are different SSCs of the same cell line. 
 
 function [bigstructNormed] = ReadNormSSCDRCData(filename,endRow)
-    filename = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/SSC Heterogeneity DRCs/All CSV Files/160511_SSC_DRC_Fixed.csv';
-    endRow = 1933;
     %import first two columns of spreadsheet as a cell (these have
     %information on what each well is)
     startRow = 2;
