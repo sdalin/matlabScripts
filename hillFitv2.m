@@ -69,23 +69,26 @@ for k = 1:size(plates,1)
 end
 
 
+%Make list of cell lines and their IC50s and rsquare values for each plate
+%then save it
 
-
-fittedHill = cell(length(pvalByConc),1);
-gof = cell(length(pvalByConc),1);
-for drug = 1:size(drugnames)
-    [fittedHill{drug}, gof{drug}] = fit(concbyDrug(drug,:)',pvalByConc(drug,:)', hill, opts );
+rowNames = {'A0';'Ainf';'IC50';'n';'rsquare';'adjrsquare'};
+cd('/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/SSC Heterogeneity DRCs/matlabOutput')
+for k = 1:size(plates,1)
+    cellLineIC50cell = cell(6,length(fittedStruct.(plates(k,:))));
+    for cellLine = 1:length(fittedStruct.(plates(k,:)))/16
+        cellLineIC50cell{1,cellLine} = fittedStruct.(plates(k,:))(1,cellLine);
+        cellLineIC50cell{2,cellLine} = fittedStruct.(plates(k,:))(2,cellLine);
+        cellLineIC50cell{3,cellLine} = fittedStruct.(plates(k,:))(3,cellLine);
+        cellLineIC50cell{4,cellLine} = fittedStruct.(plates(k,:))(4,cellLine);
+        cellLineIC50cell{5,cellLine} = fittedStruct.(plates(k,:))(5,cellLine);
+        cellLineIC50cell{6,cellLine} = fittedStruct.(plates(k,:))(6,cellLine);
+    end
+    cellLineIC50cell = [rowNames,cellLineIC50cell];
+    T = cell2table(cellLineIC50cell);
+    writetable(T,sprintf('%s',plates(k,:),'.txt'));
 end
 
-%Make list of drugs and their IC50s and rsquare values
-drugIC50cell = cell(length(drugnames),5);
-for drug = 1:size(drugnames)
-    drugIC50cell{drug,1} = fittedHill{drug}.IC50;
-    drugIC50cell{drug,2} = gof{drug}.rsquare;
-    drugIC50cell{drug,3} = fittedHill{drug}.Ainf;
-    drugIC50cell{drug,4} = fittedHill{drug}.A0;
-    drugIC50cell{drug,5} = fittedHill{drug}.n;
-end
 
 
 %Plot it
@@ -95,13 +98,7 @@ end
 %alldrugs = find(drugIC50mat(:));
 %hillPlot140217(drugnames,fittedHill,concbyDrug,pvalByConc,plate,alldrugs);
 
-
-% %Add drug names to drugIC50cell for nice output
-cd('/Users/sdalin/Dropbox (MIT)/Biology PhD/2015/Hemann Lab/Expts for Bos UROP/Calculating alpha/Output')
-drugIC50cell = [drugnames,drugIC50cell];
-T = cell2table(drugIC50cell,'VariableNames',{'DrugName','IC50','Rsquared','Ainf','A0','hillCoeff'});
-writetable(T,sprintf('%s',plate,hairpin,'.txt'));
-
+cd('/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts')
 
 
 
