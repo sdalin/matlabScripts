@@ -22,7 +22,7 @@
 %IC50 is self explanatory
 %n is Hill coefficient - measure of steepness of curve
 
-function [outputdose,killing] = hillFitv2(bigstructNormed,concentrations)
+function [fittedStruct] = hillFitv2(bigstructNormed,concentrations)
 %First define the equation we are fitting to
 hill = fittype( 'Ainf+((A0-Ainf)/(1+(x/IC50)^n))', 'independent', 'x', 'dependent', 'y' );
 
