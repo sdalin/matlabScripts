@@ -1,4 +1,4 @@
-%This script will loop through all the txt files in the current folder and
+%This script will loop through all the csv files in the current folder and
 %run ReadNormSSCDRCData.m then hillFitv2.m
 
 concentrations = [10.000000
@@ -17,9 +17,9 @@ concentrations = [10.000000
 0.001600
 0.000320
 0];
-list=dir('/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/SSC Heterogeneity DRCs/All CSV Files/*.txt');
+list=dir('/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/SSC Heterogeneity DRCs/All CSV Files/*.csv');
 for i = 1:length(list);
-    filename = sprintf('%s','/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/SSC Heterogeneity DRCs/All CSV Files/160511_SSC_DRC_Fixed.csv',list(i).name);
+    filename = sprintf('%s','/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/SSC Heterogeneity DRCs/All CSV Files/',list(i).name);
     if i == 1
         endRow = 1211;
     else
