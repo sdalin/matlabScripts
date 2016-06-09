@@ -50,7 +50,7 @@ function [bigstructNormed] = ReadNormSSCDRCData(filename,endRow)
     %DMSO
     
     for k = 1:platenum
-        for cellLine = 1:20
+        for cellLine = 1:(length(bigstruct.(allgone{indexnewplate(k),1}))/16)
             DMSOs = [bigstruct.(allgone{indexnewplate(k),1})(8 + (16 * (cellLine - 1)),2),bigstruct.(allgone{indexnewplate(k),1})(16 + (16 * (cellLine - 1)),2)];
             DMSOmean = mean(DMSOs);
             bigstructNormed.(allgone{indexnewplate(k),1})(1 + (16 * (cellLine - 1)):16 + (16 * (cellLine - 1)),1) = bigstruct.(allgone{indexnewplate(k),1})(1 + (16 * (cellLine - 1)):16 + (16 * (cellLine - 1)),2)./DMSOmean;
