@@ -30,7 +30,7 @@ end
 
 %create new struct, name fields by looking at fields of structs already
 %have, stripping date, and checking if there's already a field with that
-%name.  Put data from that field vertcat into the new field.
+%name.  Put data from that field horizcat into the new field.
 
 concatinatedStruct = struct;
 for sepStruct = 1:length(list)
@@ -39,8 +39,8 @@ for sepStruct = 1:length(list)
         fieldName = char(fields(field,:));
         newFieldName = fieldName(13:end);
         if isfield (concatinatedStruct,newFieldName)
-            %vertcat data into whats already there
-            together = vertcat(concatinatedStruct.(newFieldName),bigstructNormed.((sprintf('Rep%d',sepStruct))).(char(fieldName)));
+            %horizcat data into whats already there
+            together = horzcat(concatinatedStruct.(newFieldName),bigstructNormed.((sprintf('Rep%d',sepStruct))).(char(fieldName)));
             concatinatedStruct.(newFieldName) = together;
         else 
             %make a new field with that name and put the data in there
@@ -49,5 +49,4 @@ for sepStruct = 1:length(list)
     end
 end
     
-
-[fittedStruct] = hillFitv2(bigstructNormed,concentrations);
+[fittedStruct,fittedHill,gof] = hillFitv2(concatinatedStruct,concentrations);
