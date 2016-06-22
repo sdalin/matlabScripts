@@ -22,7 +22,7 @@
 %IC50 is self explanatory
 %n is Hill coefficient - measure of steepness of curve
 
-function [fittedStruct] = hillFitv2(bigstructNormed,concentrations)
+function [fittedStruct,fittedHill,gof] = hillFitv2(bigstructNormed,concentrations)
 %First define the equation we are fitting to
 hill = fittype( 'Ainf+((A0-Ainf)/(1+(x/IC50)^n))', 'independent', 'x', 'dependent', 'y' );
 
@@ -38,33 +38,48 @@ opts.Upper = [2 0.3 1000 Inf];
 %different cell lines (as on the original plate) and rows are A0,Ainf,IC50,n,rsquare,adjrsquare
 plates = fieldnames(bigstructNormed);
 
-
 fittedStruct = struct;
 fittedHill = cell(length(bigstructNormed.(char(plates(1,:))))/16,4);
 gof = cell(length(bigstructNormed.(char(plates(1,:))))/16,2);
+nonLinFittedHill = cell(length(bigstructNormed.(char(plates(1,:))))/16,1);
 
 for k = 1:size(plates,1)
+    fittedStruct.(char(plates(k,:))) = zeros(16,20);
+
     %This next for loop does the fit for each column of the 384-well plate
-    for cellLine = 1:size(bigstructNormed.(char(plates(k,:))),2)
+    for cellLine = 1:size(bigstructNormed.(char(plates(k,:))),1)/16
         %Check if there are any NANs in the normalized cell counts we're
         %about to fit and if there are, remove that value as well as the
         %concentration that goes along with it;
-        thisCellLine = bigstructNormed.(char(plates(k,:)))(1+(16*(cellLine-1)):(16+(16*(cellLine-1))));
-        thisCellLine(isnan(bigstructNormed.(char(plates(k,:)))(1+(16*(cellLine-1)):(16+(16*(cellLine-1)))))) = [];
-        currentConcs = concentrations;
-        currentConcs(isnan(bigstructNormed.(char(plates(k,:)))(1+(16*(cellLine-1)):(16+(16*(cellLine-1)))))) = [];
+        thisCellLine = bigstructNormed.(char(plates(k,:)))(1+(16*(cellLine-1)):(16+(16*(cellLine-1))),1:3);
+        %Make it vertical to work with the fitting script
+        thisCellLineVert = reshape(thisCellLine,numel(thisCellLine),1);
+        %Tile concentrations next to it
+        numReps = size(thisCellLineVert,1)/16;
+        currentConcs = repmat(concentrations,numReps,1);
+        %Remove rows where there is a NAN in the data
+        currentConcs(isnan(thisCellLineVert)) = [];
+        thisCellLineVert(isnan(thisCellLineVert)) = [];
         
         %Now do the fit on the values with NANs removed:
-        [fittedHill{cellLine}, gof{cellLine}] = fit(currentConcs,thisCellLine, hill, opts );
+
+        if length(thisCellLine) > 3
+            [fittedHill{cellLine}, gof{cellLine}] = fit(currentConcs,thisCellLineVert, hill, opts );
+            
+            %Calculate the standard error of each variable (modify to also
+            %do other variables too!) 
+            alphaup = 1-0.05/2;
+            upp = tinv(alphaup,gof{cellLine}.dfe);
+            upperConf = confint(fittedHill{cellLine});
+            estimatedStandardError = (upperConf(2,3) - fittedHill{cellLine}.IC50)/upp;
         
-        fittedStruct.(char(plates(k,:))) = zeros(6,20);
+        else
+            continue
+        end
+        
+        fitOutput = reshape(table2array(nonLinFittedHill{cellLine}.Coefficients),numel(nonLinFittedHill{cellLine}.Coefficients),1);
         %Load desired variables into fittedStruct
-        fittedStruct.(char(plates(k,:)))(1,cellLine) = fittedHill{cellLine}.A0;
-        fittedStruct.(char(plates(k,:)))(2,cellLine) = fittedHill{cellLine}.Ainf;
-        fittedStruct.(char(plates(k,:)))(3,cellLine) = fittedHill{cellLine}.IC50;
-        fittedStruct.(char(plates(k,:)))(4,cellLine) = fittedHill{cellLine}.n;
-        fittedStruct.(char(plates(k,:)))(5,cellLine) = gof{cellLine}.rsquare;
-        fittedStruct.(char(plates(k,:)))(6,cellLine) = gof{cellLine}.adjrsquare;
+        fittedStruct.(char(plates(k,:)))(:,cellLine) = fitOutput;
             
     end
 end
@@ -73,17 +88,19 @@ end
 %Make list of cell lines and their IC50s and rsquare values for each plate
 %then save it
 
-rowNames = {'A0';'Ainf';'IC50';'n';'rsquare';'adjrsquare'};
+rowNames = {'A0';'Ainf';'IC50';'n';'A0 SE';'Ainf SE';'IC50 SE';'n SE';'A0 SE';'Ainf tStat';'IC50 tStat';'n tStat';'A0 pValue';'Ainf pValue';'IC50 pValue';'n pValue'};
 cd('/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/SSC Heterogeneity DRCs/matlabOutput')
 for k = 1:size(plates,1)
-    cellLineIC50cell = cell(6,length(fittedStruct.(char(plates(k,:)))));
+    cellLineIC50cell = cell(16,length(fittedStruct.(char(plates(k,:)))));
     for cellLine = 1:length(fittedStruct.(char(plates(k,:))))/16
-        cellLineIC50cell{1,cellLine} = fittedStruct.(char(plates(k,:)))(1,cellLine);
-        cellLineIC50cell{2,cellLine} = fittedStruct.(char(plates(k,:)))(2,cellLine);
-        cellLineIC50cell{3,cellLine} = fittedStruct.(char(plates(k,:)))(3,cellLine);
-        cellLineIC50cell{4,cellLine} = fittedStruct.(char(plates(k,:)))(4,cellLine);
-        cellLineIC50cell{5,cellLine} = fittedStruct.(char(plates(k,:)))(5,cellLine);
-        cellLineIC50cell{6,cellLine} = fittedStruct.(char(plates(k,:)))(6,cellLine);
+        for dataVariable = 1:size(fittedStruct.(char(plates(k,:))),1)
+            cellLineIC50cell{dataVariable,cellLine} = fittedStruct.(char(plates(k,:)))(dataVariable,cellLine);
+%         cellLineIC50cell{2,cellLine} = fittedStruct.(char(plates(k,:)))(2,cellLine);
+%         cellLineIC50cell{3,cellLine} = fittedStruct.(char(plates(k,:)))(3,cellLine);
+%         cellLineIC50cell{4,cellLine} = fittedStruct.(char(plates(k,:)))(4,cellLine);
+%         cellLineIC50cell{5,cellLine} = fittedStruct.(char(plates(k,:)))(5,cellLine);
+%         cellLineIC50cell{6,cellLine} = fittedStruct.(char(plates(k,:)))(6,cellLine);
+        end
     end
     cellLineIC50cell = [rowNames,cellLineIC50cell];
     T = cell2table(cellLineIC50cell);
@@ -93,11 +110,13 @@ end
 
 
 %Plot it
-% hillPlot140217(reallyKillingDrugs,fittedHill,concbyDrug,pvalByConc,plate,betterHits);
-
-%Plot all the drugs
-%alldrugs = find(drugIC50mat(:));
-%hillPlot140217(drugnames,fittedHill,concbyDrug,pvalByConc,plate,alldrugs);
+% 
+% for cellLine = 1:length(fieldnames(bigstructNormed))
+%     hillPlot140217(reallyKillingDrugs,fittedHill,concbyDrug,pvalByConc,plate,betterHits);
+% 
+%     %Plot all the drugs
+%     alldrugs = find(drugIC50mat(:));
+%     hillPlot140217(drugnames,fittedHill,concbyDrug,pvalByConc,plate,alldrugs);
 
 cd('/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts')
 
