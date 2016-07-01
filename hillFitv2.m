@@ -22,7 +22,7 @@
 %IC50 is self explanatory
 %n is Hill coefficient - measure of steepness of curve
 
-function [fittedStruct,fittedHill,gof] = hillFitv2(bigstructNormed,concentrations)
+function [fittedStruct,individualFittedStruct] = hillFitv2(bigstructNormed,concentrations)
 %First define the equation we are fitting to
 hill = fittype( 'Ainf+((A0-Ainf)/(1+(x/IC50)^n))', 'independent', 'x', 'dependent', 'y' );
 
@@ -39,12 +39,14 @@ opts.Upper = [2 0.3 1000 Inf];
 plates = fieldnames(bigstructNormed);
 
 fittedStruct = struct;
-fittedHill = cell(length(bigstructNormed.(char(plates(1,:))))/16,4);
-gof = cell(length(bigstructNormed.(char(plates(1,:))))/16,2);
-nonLinFittedHill = cell(length(bigstructNormed.(char(plates(1,:))))/16,1);
+fittedHill = cell(length(bigstructNormed.(char(plates(1,:))))/16,1);
+gof = cell(length(bigstructNormed.(char(plates(1,:))))/16,1);
+
+individualFittedHill = cell(length((bigstructNormed.(char(plates(1,:))))/16)*3,1);
+individualGof = cell(length((bigstructNormed.(char(plates(1,:))))/16)*3,1);
 
 for k = 1:size(plates,1)
-    fittedStruct.(char(plates(k,:))) = zeros(16,20);
+    fittedStruct.(char(plates(k,:))) = zeros(9,20);
 
     %This next for loop does the fit for each column of the 384-well plate
     for cellLine = 1:size(bigstructNormed.(char(plates(k,:))),1)/16
@@ -66,45 +68,147 @@ for k = 1:size(plates,1)
         if length(thisCellLine) > 3
             [fittedHill{cellLine}, gof{cellLine}] = fit(currentConcs,thisCellLineVert, hill, opts );
             
-            %Calculate the standard error of each variable (modify to also
-            %do other variables too!) 
+            %Calculate the standard error of each variable from fitting all
+            %the data
+            
+            %First we need the area under 95% of the t distribution given
+            %reported degrees of freedom:
             alphaup = 1-0.05/2;
             upp = tinv(alphaup,gof{cellLine}.dfe);
-            upperConf = confint(fittedHill{cellLine});
-            estimatedStandardError = (upperConf(2,3) - fittedHill{cellLine}.IC50)/upp;
-        
+            
+            %variable to calculate sdErr for
+            stErrVariables = fieldnames(fittedHill{cellLine});
+            
+            for field = 1:size(stErrVariables,1)
+                %Now based on the reported confidence interval, we can
+                %calculate the stderr (confirmed by crosschecking with fitnlm
+                %calculated sterrs)
+                upperConf = confint(fittedHill{cellLine});
+                estimatedStandardError = (upperConf(2,field) - fittedHill{cellLine}.(char(stErrVariables(field,:))))/upp;
+
+                %Add the sterrs to a subfield of gof called stErr.A0,
+                %stErr.Ainf, etc.
+                gof{cellLine}.stErr.(char(stErrVariables(field,:))) = estimatedStandardError;
+            end
+            
+            %Do the fit on each replicate individually:
+            for replicate = 1:numReps
+                %Remove rows where there is a NAN in the data
+                currentConcs = concentrations;
+                currentCellLine = thisCellLine(:,replicate);
+                currentConcs(isnan(currentCellLine(:))) = [];
+                currentCellLine(isnan(currentCellLine(:))) = [];
+                
+                if length(currentCellLine) > 3
+                    %The fit
+                    [individualFittedHill{((cellLine-1)*3)+replicate}, individualGof{((cellLine-1)*3)+replicate}] = fit(currentConcs,currentCellLine, hill, opts);
+                else
+                    continue
+                end
+            end
+            
+            %calculate the standard error of each variable from doing three
+            %fits seperately
+            
+            for field = 1:size(stErrVariables,1)
+                %Get standard error directly from the replicates
+                %Add the sterrs to a subfield of gof called stErr.A0,
+                %stErr.Ainf, etc.
+                
+                currentVariable = zeros(3,1);
+                for replicate = 1:numReps
+                    if ~isempty(individualFittedHill{((cellLine-1)*3)+replicate})
+                        currentVariable(numReps,1) = individualFittedHill{((cellLine-1)*3)+replicate}.(char(stErrVariables(field,:)));
+                    else
+                        continue
+                    end
+                end
+                individualGof{((cellLine-1)*3)+1}.stErr.(char(stErrVariables(field,:))) = std(currentVariable)/sqrt(numReps);
+            end
+                
+
         else
             continue
         end
         
-        fitOutput = reshape(table2array(nonLinFittedHill{cellLine}.Coefficients),numel(nonLinFittedHill{cellLine}.Coefficients),1);
-        %Load desired variables into fittedStruct
-        fittedStruct.(char(plates(k,:)))(:,cellLine) = fitOutput;
+        
+        %Load desired variables (best fit, SE, and rsquare) into
+        %fittedStruct and individualFittedStruct
+        for field = 1:size(stErrVariables,1)
+            fittedStruct.(char(plates(k,:)))(field,cellLine) = fittedHill{cellLine}.(char(stErrVariables(field,:)));          
+            fittedStruct.(char(plates(k,:)))(field+4,cellLine) = gof{cellLine}.stErr.(char(stErrVariables(field,:))); 
             
+            for replicate = 1:numReps
+                if ~isempty(individualFittedHill{((cellLine-1)*3)+replicate})
+                    individualFittedStruct.(char(plates(k,:)))(field,((cellLine-1)*3)+replicate) = individualFittedHill{((cellLine-1)*3)+replicate}.(char(stErrVariables(field,:)));
+                else
+                    continue
+                end
+                
+                if isfield(individualGof{((cellLine-1)*3)+replicate},'stErr')
+                    individualFittedStruct.(char(plates(k,:)))(field+4,((cellLine-1)*3)+replicate) = individualGof{((cellLine-1)*3)+replicate}.stErr.(char(stErrVariables(field,:)));
+                else
+                    continue
+                end
+            end
+        end
+        
+        fittedStruct.(char(plates(k,:)))(9,cellLine) = gof{cellLine}.rsquare;
+        
+        for replicate = 1:numReps
+            if isfield(individualGof{((cellLine-1)*3)+replicate},'rsquare')
+                individualFittedStruct.(char(plates(k,:)))(9,((cellLine-1)*3)+replicate) = individualGof{((cellLine-1)*3)+replicate}.rsquare;
+            else
+                continue
+            end
+        end
     end
+    
+%     %Are IC50's of each cell line and it's clones significantly different from
+%     %each other? (ANOVA)
+%     
+%     %First need to generate random data because matlab's ANOVA requires
+%     %data, not descriptive statistics
+%     
+%     presumedN = 43;
+%     randData = zeros(presumedN,size(bigstructNormed.(char(plates(k,:))),1)/16);
+%     for cellLine = 1:size(bigstructNormed.(char(plates(k,:))),1)/16
+%         randData(:,cellLine) = normrnd(fittedStruct.(char(plates(k,:)))(3,cellLine),(fittedStruct.(char(plates(k,:)))(7,cellLine))*sqrt(presumedN),presumedN,1);
+%     end
+%     
+%     %Now run the ANOVA
+%     [p,tbl,stats] = anova1(randData);
+    
 end
 
 
-%Make list of cell lines and their IC50s and rsquare values for each plate
+
+
+%Make list of cell lines and their IC50s, stErr, and rsquare values for each plate
 %then save it
 
-rowNames = {'A0';'Ainf';'IC50';'n';'A0 SE';'Ainf SE';'IC50 SE';'n SE';'A0 SE';'Ainf tStat';'IC50 tStat';'n tStat';'A0 pValue';'Ainf pValue';'IC50 pValue';'n pValue'};
+rowNames = {'A0';'Ainf';'IC50';'n';'A0 SE';'Ainf SE';'IC50 SE';'n SE';'rsquare'};
 cd('/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/SSC Heterogeneity DRCs/matlabOutput')
 for k = 1:size(plates,1)
-    cellLineIC50cell = cell(16,length(fittedStruct.(char(plates(k,:)))));
-    for cellLine = 1:length(fittedStruct.(char(plates(k,:))))/16
+    cellLineIC50cell = cell(9,length(fittedStruct.(char(plates(k,:)))));
+    individualCellLineIC50cell = cell(9,length(individualFittedStruct.(char(plates(k,:)))));
+    
+    for cellLine = 1:length(fittedStruct.(char(plates(k,:))))
         for dataVariable = 1:size(fittedStruct.(char(plates(k,:))),1)
             cellLineIC50cell{dataVariable,cellLine} = fittedStruct.(char(plates(k,:)))(dataVariable,cellLine);
-%         cellLineIC50cell{2,cellLine} = fittedStruct.(char(plates(k,:)))(2,cellLine);
-%         cellLineIC50cell{3,cellLine} = fittedStruct.(char(plates(k,:)))(3,cellLine);
-%         cellLineIC50cell{4,cellLine} = fittedStruct.(char(plates(k,:)))(4,cellLine);
-%         cellLineIC50cell{5,cellLine} = fittedStruct.(char(plates(k,:)))(5,cellLine);
-%         cellLineIC50cell{6,cellLine} = fittedStruct.(char(plates(k,:)))(6,cellLine);
         end
     end
-    cellLineIC50cell = [rowNames,cellLineIC50cell];
+        
+    for cellLine = 1:length(individualFittedStruct.(char(plates(k,:))))
+        for dataVariable = 1:size(individualFittedStruct.(char(plates(k,:))),1)
+            individualCellLineIC50cell{dataVariable,cellLine} = individualFittedStruct.(char(plates(k,:)))(dataVariable,cellLine);
+        end
+    end
+        
     T = cell2table(cellLineIC50cell);
-    writetable(T,sprintf('%s',char(plates(k,:)),'.txt'));
+    indT = cell2table(individualCellLineIC50cell);
+    writetable(T,sprintf('%s',char(plates(k,:)),'.csv'));
+    writetable(indT,sprintf('%s','individual',char(plates(k,:)),'.csv'));
 end
 
 
