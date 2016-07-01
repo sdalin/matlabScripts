@@ -49,4 +49,4 @@ for sepStruct = 1:length(list)
     end
 end
     
-[fittedStruct,fittedHill,gof] = hillFitv2(concatinatedStruct,concentrations);
+[fittedStruct,individualFittedStruct] = hillFitv2(bigstructNormed,concentrations);
