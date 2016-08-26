@@ -53,10 +53,13 @@ dose(1,:,8) = [15 11 16.5 4750]; %week 8 doses
 dose(1,:,9) = [20 11.5 17.5 8500]; %week 9 doses
 dose(1,:,10) = [25 12.5 18.6 11000]; %week 10 doses **This week had a 4 day selection rather than 3 days (leitan wedding!)
 dose(1,:,11) = [30 15 21 15000]; %week 11 doses (really getting there omg)
-dose(1,:,12) = [35 16 21.5 15000]; %week 12 doses
-dose(1,:,13) = [40 17.5 22.5 15000]; %week 13 doses (Jaime FACSd)
-dose(1,:,14) = [0 0 24 15250]; %week 14 doses - dox, vin are currently dead.  I'll fill in this data later.
-
+dose(1,:,12) = [35 16 21.5 15000]; %week 12 doses (DV from 6/30, PC from 4/15)
+dose(1,:,13) = [35 17.5 22.5 15000]; %week 13 doses (DV from 7/8, PC from 5/21)
+dose(1,:,14) = [nan nan 24 15250]; %week 14 doses (IQUe was broken for DV week.  PC from 5/27)
+dose(1,:,15) = [45 21 26 15250]; %week 15 doses (DV from 7/22, PC from 6/3)
+dose(1,:,16) = [nan nan 29 11000]; %week 16 doses (didn't have time to FACS DV because IQue was broken. PC from 6/10)
+dose(1,:,17) = [65 25 31.5 15000]; %week 17 doses (DV from 8/5, PC from 6/17)
+dose(1,:,18) = [75 27.5 nan nan]; %week 18 doses (DV from 8/21, didn't FACS PC)
 %%
 %First import the PI values for each week.  Rows are different wells,
 %columns are different weeks. One matrix per drug.
@@ -134,11 +137,19 @@ end
 %Make a matrix with 4 columns, specifying rows of each drug which have rank
 %below 50 for the previous resWeeks weeks
 
+%Don't exclude any cell line that has an NaN for a given week withink
+%resweeks
+
 below50Lines = [];
 
 for drug = 1:4
     interestingCellLineRankings = cellLineRankings(:,:,numWeeks-resWeeks+1:end);
-    dummy = sum(squeeze(interestingCellLineRankings(:,drug,:))<=50,2);
+    %to include cell lines with NaNs, change all Nans to 50 in
+    %interestingCellLineRankings
+    interestingCellLineRankings50 = interestingCellLineRankings;
+    interestingCellLineRankings50(isnan(interestingCellLineRankings)) = 50;
+    
+    dummy = sum(squeeze(interestingCellLineRankings50(:,drug,:))<=50,2);
     temporary = find(dummy == resWeeks);
 
     %if ~isempty(below50Lines)
@@ -157,13 +168,21 @@ end
 %Make a matrix with 4 columns, specifying rows of each drug which have
 %decreasing rank for the previous resWeeks weeks.
 
+%Don't exclude any cell line that has an NaN for a given week withink
+%resweeks
+
 cellLineDiffs = nan(96,1,2);
 decreasingLines = [];
 
 for drug = 1:4
     cellLineDiffs = diff(cellLineRankings(:,drug,:),1,3);
     interestingCellLineDiffs = cellLineDiffs(:,:,numWeeks-resWeeks+1:end);
-    dummy = sum(squeeze(interestingCellLineDiffs)<=0,2);    
+    %to include cell lines with NaNs, change all Nans to 0 in
+    %interestingCellLineDiffs
+    interestingCellLineDiffs0 = interestingCellLineDiffs;
+    interestingCellLineDiffs0(isnan(interestingCellLineDiffs)) = 0;
+    
+    dummy = sum(squeeze(interestingCellLineDiffs0)<=0,2);    
     temporary = find(dummy == resWeeks-1);
     
     if isempty(temporary) == 1
