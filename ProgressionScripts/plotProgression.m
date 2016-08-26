@@ -32,12 +32,18 @@ for drug = 1:4
     if isempty(linesToPlotNoNAN)
         continue
     end
-        
+    
+   
     y1 = squeeze(cellLineRankings(:,drug,:));
     y2 = squeeze(dose(1,drug,:));
     
     set(groot,'defaultAxesColorOrder',greyco);
-    [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
+    
+    for cellLine = 1:size(y1,1)
+        y1cellLine = y1(cellLine,:)';
+        [hAx,hLine1,hLine2] = plotyy(x(~isnan(y1cellLine)),y1cellLine(~isnan(y1cellLine)),x(~isnan(y2)),y2(~isnan(y2)));
+        hold on
+    end
     
     hold on
     
@@ -48,7 +54,11 @@ for drug = 1:4
         y3 = transpose(y3);
     end
     
-    sAx = plot(x,y3,'.-','LineWidth',2,'MarkerSize',15);
+    for cellLine = 1:size(y3,1)
+        y3cellLine = y3(cellLine,:)';
+        sAx = plot(x(~isnan(y3cellLine)),y3cellLine(~isnan(y3cellLine)),'.-','LineWidth',2,'MarkerSize',15);
+        hold on
+    end
       
     xlabel('Week')
     ylabel(hAx(1),'Rank') %left y-axis
@@ -99,7 +109,12 @@ for drug = 1:4
     y2 = squeeze(dose(1,drug,:));
     
     set(groot,'defaultAxesColorOrder',greyco);
-    [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
+    
+    for cellLine = 1:size(y1,1)
+        y1cellLine = y1(cellLine,:)';
+        [hAx,hLine1,hLine2] = plotyy(x(~isnan(y1cellLine)),y1cellLine(~isnan(y1cellLine)),x(~isnan(y2)),y2(~isnan(y2)));
+        hold on
+    end
     
     hold on
     
@@ -108,7 +123,12 @@ for drug = 1:4
     if size(y3,1) == size(y3,2)
         y3 = transpose(y3);
     end
-    sAx = plot(x,y3,'.-','LineWidth',2,'MarkerSize',15);
+    
+    for cellLine = 1:size(y3,1)
+        y3cellLine = y3(cellLine,:)';
+        sAx = plot(x(~isnan(y3cellLine)),y3cellLine(~isnan(y3cellLine)),'.-','LineWidth',2,'MarkerSize',15);
+        hold on
+    end    
       
     xlabel('Week')
     ylabel(hAx(1),'z-score') %left y-axis
