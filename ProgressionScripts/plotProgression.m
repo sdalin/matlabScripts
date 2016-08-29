@@ -32,33 +32,35 @@ for drug = 1:4
     if isempty(linesToPlotNoNAN)
         continue
     end
-    
-   
+        
     y1 = squeeze(cellLineRankings(:,drug,:));
     y2 = squeeze(dose(1,drug,:));
     
-    set(groot,'defaultAxesColorOrder',greyco);
+    %Don't plot weeks with no data
+    x1 = x;
+    x1(:,~any(~isnan(y1),1))=[];
+    y1NoNaN = y1;
+    y1NoNaN(:,~any(~isnan(y1),1)) = [];
     
-    for cellLine = 1:size(y1,1)
-        y1cellLine = y1(cellLine,:)';
-        [hAx,hLine1,hLine2] = plotyy(x(~isnan(y1cellLine)),y1cellLine(~isnan(y1cellLine)),x(~isnan(y2)),y2(~isnan(y2)));
-        hold on
-    end
+    
+    set(groot,'defaultAxesColorOrder',greyco);
+    [hAx,hLine1,hLine2] = plotyy(x1,y1NoNaN,x(~isnan(y2)),y2(~isnan(y2)));
     
     hold on
     
     set(gca,'ColorOrder',normalco)
     y3 = squeeze(cellLineRankings(linesToPlotNoNAN,drug,:)); 
-
+    x3 = x;
+    x3(:,~any(~isnan(y3),1))=[];
+    y3NoNaN = y3;
+    y3NoNaN(:,~any(~isnan(y3),1)) = [];
+    
+    
     if size(y3,1) == size(y3,2)
         y3 = transpose(y3);
     end
     
-    for cellLine = 1:size(y3,1)
-        y3cellLine = y3(cellLine,:)';
-        sAx = plot(x(~isnan(y3cellLine)),y3cellLine(~isnan(y3cellLine)),'.-','LineWidth',2,'MarkerSize',15);
-        hold on
-    end
+    sAx = plot(x3,y3NoNaN,'.-','LineWidth',2,'MarkerSize',15);
       
     xlabel('Week')
     ylabel(hAx(1),'Rank') %left y-axis
@@ -108,27 +110,27 @@ for drug = 1:4
     y1 = squeeze(normalizedZscores(:,drug,:));
     y2 = squeeze(dose(1,drug,:));
     
+    %Don't plot weeks with no data
+    x1 = x;
+    x1(:,~any(~isnan(y1),1))=[];
+    y1NoNaN = y1;
+    y1NoNaN(:,~any(~isnan(y1),1)) = [];
+    
     set(groot,'defaultAxesColorOrder',greyco);
-    
-    for cellLine = 1:size(y1,1)
-        y1cellLine = y1(cellLine,:)';
-        [hAx,hLine1,hLine2] = plotyy(x(~isnan(y1cellLine)),y1cellLine(~isnan(y1cellLine)),x(~isnan(y2)),y2(~isnan(y2)));
-        hold on
-    end
-    
+    [hAx,hLine1,hLine2] = plotyy(x1,y1NoNaN,x(~isnan(y2)),y2(~isnan(y2)));    
     hold on
     
     set(gca,'ColorOrder',normalco)
-    y3 = squeeze(normalizedZscores(linesToPlotNoNAN,drug,:));    
+    y3 = squeeze(normalizedZscores(linesToPlotNoNAN,drug,:)); 
+    x3 = x;
+    x3(:,~any(~isnan(y3),1))=[];
+    y3NoNaN = y3;
+    y3NoNaN(:,~any(~isnan(y3),1)) = [];
+    
     if size(y3,1) == size(y3,2)
         y3 = transpose(y3);
     end
-    
-    for cellLine = 1:size(y3,1)
-        y3cellLine = y3(cellLine,:)';
-        sAx = plot(x(~isnan(y3cellLine)),y3cellLine(~isnan(y3cellLine)),'.-','LineWidth',2,'MarkerSize',15);
-        hold on
-    end    
+    sAx = plot(x3,y3NoNaN,'.-','LineWidth',2,'MarkerSize',15);
       
     xlabel('Week')
     ylabel(hAx(1),'z-score') %left y-axis
@@ -183,17 +185,27 @@ for drug = 1:4
     y1 = squeeze(PIDataFiltered(:,drug,:));
     y2 = squeeze(dose(1,drug,:));
     
-    set(groot,'defaultAxesColorOrder',greyco);
-    [hAx,hLine1,hLine2] = plotyy(x,y1,x,y2);
+    %Don't plot weeks with no data
+    x1 = x;
+    x1(:,~any(~isnan(y1),1))=[];
+    y1NoNaN = y1;
+    y1NoNaN(:,~any(~isnan(y1),1)) = [];
     
+    set(groot,'defaultAxesColorOrder',greyco);
+    [hAx,hLine1,hLine2] = plotyy(x1,y1NoNaN,x(~isnan(y2)),y2(~isnan(y2)));    
     hold on
     
     set(gca,'ColorOrder',normalco)
     y3 = squeeze(PIDataFiltered(linesToPlotNoNAN,drug,:));    
+    x3 = x;
+    x3(:,~any(~isnan(y3),1))=[];
+    y3NoNaN = y3;
+    y3NoNaN(:,~any(~isnan(y3),1)) = [];
+    
     if size(y3,1) == size(y3,2)
         y3 = transpose(y3);
     end
-    sAx = plot(x,y3,'.-','LineWidth',2,'MarkerSize',15);
+    sAx = plot(x3,y3NoNaN,'.-','LineWidth',2,'MarkerSize',15);
       
     xlabel('Week')
     ylabel(hAx(1),'PI-%') %left y-axis
