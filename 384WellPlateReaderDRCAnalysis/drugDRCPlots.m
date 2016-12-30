@@ -69,12 +69,13 @@ function drugDRCPlots(dataAfterFit,folder)
             %colors
             if strcmp(cellLines{cellLine},'Parental')
                 set(p,'Color',[0,0,0]);
+                set(p,'LineWidth',3);
             else
                 set(p,'Color',colorvec(cellLine,:));
+                set(p,'LineWidth',1);
             end
             
-            set(p,'DisplayName',(cellLines{cellLine}));
-            set(p,'LineWidth',1);
+            set(p,'DisplayName',(cellLines{cellLine}));  
             axis([-inf,inf,-0.2,1.2])
             set(gca,'XScale','log');
             set(p,'MarkerSize',15)
@@ -96,7 +97,7 @@ function drugDRCPlots(dataAfterFit,folder)
             
             %Put in the error bars
              if strcmp(cellLines{cellLine},'Parental')
-                errorbar(concentrations,means,sem,'Color',[0,0,0],'Linestyle','none')
+                errorbar(concentrations,means,sem,'Color',[0,0,0],'Linestyle','none','LineWidth',2)
              else
                 errorbar(concentrations,means,sem,'Color',colorvec(cellLine,:),'Linestyle','none')
             end
