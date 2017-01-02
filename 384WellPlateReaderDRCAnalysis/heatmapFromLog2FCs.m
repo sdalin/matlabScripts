@@ -25,7 +25,9 @@ function heatmapFromLog2FCs(dataAfterFit,folder)
     %First get all the Log2FCs averaged (ignoring []'s/Nan's) and put into
     %a matrix with rows as cell lines and columns as drugs
     drugs = fieldnames(dataAfterFit.rawData);
-    cellLines = fieldnames(dataAfterFit.rawData.(drugs{1}));
+    drugs = cellfun(@(x) x(6:end),drugs,'UniformOutput',false);
+
+    cellLines = fieldnames(dataAfterFit.rawData.(sprintf('drug_%s',drugs{1})));
    
     %Initialize the matrix
     heatmapMatrix = [];
@@ -35,12 +37,12 @@ function heatmapFromLog2FCs(dataAfterFit,folder)
             %Find the row/column corresponding to this drug/cell line in
             %the matrix
             heatmapRow = find(strcmp(cellLines,cellLines{cellLine}));
-            heatmapColumn = find(strcmp(drugs,drugs{drug}));
+            heatmapColumn = find(strcmp(drugs,(drugs{drug})));
             
             %Average of the measured Log2FC's for this cell line/drug pair
             %First find the column of this cellLine
-            cellLineColumn = find(strcmp(dataAfterFit.fitParams.(drugs{drug}).Log2FC(1,:),cellLines{cellLine}));
-            averageLog2FC = nanmean(cell2mat(dataAfterFit.fitParams.(drugs{drug}).Log2FC(2:end,cellLineColumn)));
+            cellLineColumn = find(strcmp(dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).Log2FC(1,:),cellLines{cellLine}));
+            averageLog2FC = nanmean(cell2mat(dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).Log2FC(2:end,cellLineColumn)));
             
             %Put this averaged value into the large matrix in the right
             %row/column
@@ -73,16 +75,17 @@ function heatmapFromLog2FCs(dataAfterFit,folder)
     log2Scale = max(log2ScaleMax,abs(log2ScaleMin));
     
     %Make heatmap!
+    cellLines = regexprep(cellLines,'_',' ');
     foldChangeHeatmap = clustergram(heatmapMatrix,'RowLabels',cellLines,'ColumnLabels',drugs,'DisplayRange',log2Scale,'Symmetric','true','Colormap',redbluecmap,'RowLabelsRotate',0,'ImputeFun',@knnimpute);
     
 
     plot(foldChangeHeatmap);
     
     %Somehow this bit is supposed to make the colorbar but its failing
-    %miserably.  Also remove the 'drug_' from drug names.
-    colormap(redbluecmap(256));
-    imagesc(heatmapMatrix,[-log2Scale log2Scale]);
-    colorbar;
+    %miserably. 
+    %colormap(redbluecmap(256));
+    %imagesc(heatmapMatrix,[-log2Scale log2Scale]);
+    %colorbar;
     
     %Save into folder with raw data
     cd(sprintf('%s/matlabOutput',folder))
