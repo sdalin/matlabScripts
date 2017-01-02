@@ -23,14 +23,15 @@
 function barPlotsEC50s(dataAfterFit,folder)
     mkdir(sprintf('%s/matlabOutput/BarPlots',folder))
     drugs = fieldnames(dataAfterFit.rawData);
+    drugs = cellfun(@(x) x(6:end),drugs,'UniformOutput',false);
     
     for drug = 1:size(drugs,1)
         clf
         %Find the measurements of the parental EC50
-        columnParental = find(strcmp(dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).EC50(1,:),'Parental'));
-        parentalEC50Measurements = dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).EC50(:,columnParental);
+        columnParental = find(strcmp(dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).EC50(1,:),'Parental'));
+        parentalEC50Measurements = dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).EC50(:,columnParental);
         parentalEC50Average = nanmean(cell2mat(parentalEC50Measurements(2:end)));
-        currentEC50s = dataAfterFit.fitParams.(drugs{drug}).EC50(:,2:end);
+        currentEC50s = dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).EC50(:,2:end);
         currentEC50s = sortrows(currentEC50s',1)';
         cellLines = currentEC50s(1,:)';
         currentEC50s = currentEC50s(2:end,:);
@@ -62,7 +63,10 @@ function barPlotsEC50s(dataAfterFit,folder)
         plot([0,size(cellLines,1)+1],[1,1]*parentalEC50Average,':k')
         
         hold off
-        set(gca, 'XTick', xt, 'XTickLabel', cellLines,'XTickLabelRotation',90)
+        
+        cellLineLabels = regexprep(cellLines,'_',' ');
+
+        set(gca, 'XTick', xt, 'XTickLabel', cellLineLabels,'XTickLabelRotation',90)
         xlabel('Cell Lines')
         ylabel('EC50 (uM)')
         title(drugs{drug})
@@ -72,6 +76,8 @@ function barPlotsEC50s(dataAfterFit,folder)
         else
             maxY = max(currentEC50s) + 0.1*range(currentEC50s);
             minY = min(currentEC50s) - 0.1*range(currentEC50s);
+        end
+        
         axis([0,size(cellLines,1)+1,minY,maxY])
         
         %Save into subfolder of raw data (called 'BarPlots')
