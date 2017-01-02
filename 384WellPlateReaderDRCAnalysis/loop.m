@@ -45,10 +45,11 @@ heatmapFromLog2FCs(dataAfterFit,folderName);
 %where the parental EC50 is
 barPlotsEC50s(dataAfterFit,folderName);
 
-%Make DRC plots for each drug with all cell lines
-drugDRCPlots(dataAfterFit,folderName);
+%Select which cell lines and drugs to plot
+[selectedDrugs,selectedCellLines] = selectDataToPlot(dataAfterFit);
 
-%Plot any cell line/drug pair on the same plot (including parentals)
+%Make DRC plots for each drug with all cell lines
+drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folderName);
 
 
 %%
