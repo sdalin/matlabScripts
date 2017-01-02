@@ -19,14 +19,17 @@
 %OUTPUT:
 %DRC plots as descriped above in folder.
 
-function drugDRCPlots(dataAfterFit,folder)
+function drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folder)
     addpath('/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts/kakearney-legendflex-pkg-98b988e/legendflex','/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts/kakearney-legendflex-pkg-98b988e/setgetpos_V1.2');
 
     mkdir(sprintf('%s/matlabOutput/DRCPlots',folder))
-    drugs = fieldnames(dataAfterFit.rawData);
+    drugs = selectedDrugs;
+    drugs = cellfun(@(x) x(6:end),drugs,'UniformOutput',false);
+    allDrugs = fieldnames(dataAfterFit.rawData);
     
     for drug = 1:size(drugs,1)
-        cellLines = fieldnames(dataAfterFit.rawData.(drugs{drug}));
+        allCellLines = fieldnames(dataAfterFit.rawData.(sprintf('drug_%s',drugs{drug})));
+        cellLines = intersect(allCellLines,selectedCellLines);
         clf
         %This sets up the colors for the cell lines in the plots
         colorvec = hsv(size(cellLines,1));
@@ -39,9 +42,9 @@ function drugDRCPlots(dataAfterFit,folder)
         lineHandles = gobjects(size(cellLines,1),1);
         
         for cellLine = 1:size(cellLines,1)
-            fittedHill = dataAfterFit.fitObj.allDataFit.(drugs{drug}).(cellLines{cellLine});
-            concs = dataAfterFit.rawData.(drugs{drug}).(cellLines{cellLine})(:,1);
-            viability = dataAfterFit.rawData.(drugs{drug}).(cellLines{cellLine})(:,2);
+            fittedHill = dataAfterFit.fitObj.allDataFit.(sprintf('drug_%s',drugs{drug})).(cellLines{cellLine});
+            concs = dataAfterFit.rawData.(sprintf('drug_%s',drugs{drug})).(cellLines{cellLine})(:,1);
+            viability = dataAfterFit.rawData.(sprintf('drug_%s',drugs{drug})).(cellLines{cellLine})(:,2);
             
             %Make concentrations and viabilities into matrixes for ease of
             %processing
@@ -108,7 +111,8 @@ function drugDRCPlots(dataAfterFit,folder)
         end 
         
         %Make the legends);
-        legendflex(lineHandles(:),cellLines,'ncol',2,'anchor',{'ne','se'},'buffer',[95,-200],'xscale',0.3,'box','off')
+        legendCellLines = regexprep(cellLines,'_',' ');
+        legendflex(lineHandles(:),legendCellLines,'ncol',2,'anchor',{'ne','se'},'buffer',[105,-200],'xscale',0.3,'box','off')
         %Nudge everything left a smidge so it fits in the plot
         pos = get(gca, 'Position');
         xoffset = -0.07;
@@ -119,8 +123,15 @@ function drugDRCPlots(dataAfterFit,folder)
         cd(sprintf('%s/matlabOutput/DRCPlots',folder))
         set(gcf,'paperpositionmode','auto')
         %set(gcf,'Renderer','OpenGL')
-        print(sprintf('%s DRC plot',drugs{drug}),'-dpdf','-bestfit');
+        if sum(length(drugs) == length(allDrugs)) && sum(length(selectedCellLines) == length(allCellLines'))
+            print(sprintf('%s DRC plot',(drugs{drug})),'-dpdf','-bestfit');
+        else
+            titles = [cellLines{:}];
+            print(sprintf('%s %s DRC plot',(drugs{drug}),titles),'-dpdf','-bestfit');
+        end
+        
         cd('/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts/384WellPlateReaderDRCAnalysis')
+        
         
         clf
     end
