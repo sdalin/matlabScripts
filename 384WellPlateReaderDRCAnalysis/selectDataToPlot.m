@@ -45,7 +45,7 @@ function [selectedDrugs,selectedCellLines] = selectDataToPlot(dataAfterFit)
    cellLineList.Units = 'normalized';
 
    % Assign the GUI a name to appear in the window title.
-   f.Name = 'Simple GUI';
+   f.Name = 'Select Data to Plot';
    % Move the GUI to the center of the screen.
    movegui(f,'center')
    % Make the GUI visible.
