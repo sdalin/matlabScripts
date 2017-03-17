@@ -35,7 +35,7 @@ drugNames = {'Doxorubicin','Vincristine','Paclitaxel','Cisplatin'};
 
 %Number of weeks below rank 50 or decreasing in rank that plotted cell
 %lines should be.
-resWeeks = 5;
+resWeeks = 10;
 
 dataDir = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/Creating Resistant Cells/Round 3/Mondays/CSV_Files/';
 

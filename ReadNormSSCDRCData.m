@@ -43,19 +43,32 @@ function [bigstructNormed] = ReadNormSSCDRCData(filename,endRow)
         k = k+1;
     end
     
-    %For each plate, normalize cell # in each column to the average of rows
-    %H & P, which had DMSO.
+%     %For each plate, normalize cell # in each column to the average of rows
+%     %H & P, which had DMSO.
+%     
+%     %Normalize each column of each plate to average of row H & P which had
+%     %DMSO
+%     
+%     for k = 1:platenum
+%         for cellLine = 1:(length(bigstruct.(allgone{indexnewplate(k),1}))/16)
+%             DMSOs = [bigstruct.(allgone{indexnewplate(k),1})(8 + (16 * (cellLine - 1)),2),bigstruct.(allgone{indexnewplate(k),1})(16 + (16 * (cellLine - 1)),2)];
+%             DMSOmean = nanmean(DMSOs);
+%             bigstructNormed.(allgone{indexnewplate(k),1})(1 + (16 * (cellLine - 1)):16 + (16 * (cellLine - 1)),1) = bigstruct.(allgone{indexnewplate(k),1})(1 + (16 * (cellLine - 1)):16 + (16 * (cellLine - 1)),2)./DMSOmean;
+%         end
+%     end
     
-    %Normalize each column of each plate to average of row H & P which had
+    %For each plate, normalize cell # in each column to the average of columns 1 and 23, which had DMSO.
+    
+    %Normalize each column of each plate to average of columns 1 and 23 which had
     %DMSO
     
-    for k = 1:platenum
-        for cellLine = 1:(length(bigstruct.(allgone{indexnewplate(k),1}))/16)
-            DMSOs = [bigstruct.(allgone{indexnewplate(k),1})(8 + (16 * (cellLine - 1)),2),bigstruct.(allgone{indexnewplate(k),1})(16 + (16 * (cellLine - 1)),2)];
-            DMSOmean = nanmean(DMSOs);
-            bigstructNormed.(allgone{indexnewplate(k),1})(1 + (16 * (cellLine - 1)):16 + (16 * (cellLine - 1)),1) = bigstruct.(allgone{indexnewplate(k),1})(1 + (16 * (cellLine - 1)):16 + (16 * (cellLine - 1)),2)./DMSOmean;
+        for k = 1:platenum
+            for cellLine = 1:(length(bigstruct.(allgone{indexnewplate(k),1}))/16)
+                DMSOs = [bigstruct.(allgone{indexnewplate(k),1})(1:16,2);bigstruct.(allgone{indexnewplate(k),1})(337:352,2)];
+                DMSOmean = nanmedian(DMSOs);
+                bigstructNormed.(allgone{indexnewplate(k),1})(:,1) = bigstruct.(allgone{indexnewplate(k),1})(:,2)./DMSOmean;
+            end
         end
-    end
     
    
         

@@ -50,6 +50,13 @@ for drug = 1:4
     
     set(gca,'ColorOrder',normalco)
     y3 = squeeze(cellLineRankings(linesToPlotNoNAN,drug,:)); 
+    
+    %squeeze gets rid of singleton dimensions, but if only one cell line to
+    %plot, don't want to get rid of the 2nd dimension!
+    if size(y3,2) == 1
+        y3 = y3';
+    end
+    
     x3 = x;
     x3(:,~any(~isnan(y3),1))=[];
     y3NoNaN = y3;
@@ -122,6 +129,13 @@ for drug = 1:4
     
     set(gca,'ColorOrder',normalco)
     y3 = squeeze(normalizedZscores(linesToPlotNoNAN,drug,:)); 
+    
+    %squeeze gets rid of singleton dimensions, but if only one cell line to
+    %plot, don't want to get rid of the 2nd dimension!
+    if size(y3,2) == 1
+        y3 = y3';
+    end
+    
     x3 = x;
     x3(:,~any(~isnan(y3),1))=[];
     y3NoNaN = y3;
@@ -196,7 +210,14 @@ for drug = 1:4
     hold on
     
     set(gca,'ColorOrder',normalco)
-    y3 = squeeze(PIDataFiltered(linesToPlotNoNAN,drug,:));    
+    y3 = squeeze(PIDataFiltered(linesToPlotNoNAN,drug,:)); 
+    
+    %squeeze gets rid of singleton dimensions, but if only one cell line to
+    %plot, don't want to get rid of the 2nd dimension!
+    if size(y3,2) == 1
+        y3 = y3';
+    end
+    
     x3 = x;
     x3(:,~any(~isnan(y3),1))=[];
     y3NoNaN = y3;
