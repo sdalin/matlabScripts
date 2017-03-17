@@ -48,6 +48,9 @@ function [dataAfterFit] = hillFitv2(bigstructNormed,dataAfterFit,folderName)
         dataAfterFit.fitParams.dataFit = cell(0);
     end
 
+    if ~isfield(dataAfterFit.fitParams,'badData')
+        dataAfterFit.fitParams.badData = cell(0);
+    end
 
     %Run the actual fit for the normalized viabilities in bigstructNormed
     experiments = fieldnames(bigstructNormed);
@@ -69,14 +72,15 @@ function [dataAfterFit] = hillFitv2(bigstructNormed,dataAfterFit,folderName)
                     %This variable is only true if the data has never before
                     %been fit & saved
                     dataNotFit = ~sum(strcmp(dataAfterFit.fitParams.dataFit,sprintf('drug_%s_%s_%s',drugs{drug},cellLines{cellLine},experiments{experiment})));
-
+                    dataNotBad = ~sum(strcmp(dataAfterFit.fitParams.badData,sprintf('drug_%s_%s_%s',drugs{drug},cellLines{cellLine},experiments{experiment})));
+                    
                     if isempty(drugs{drug})
                         continue
 
                         %Check if this experiment/cellLine/drug has already
                         %been run.  Don't enter into analysis if it already exists
 
-                    elseif dataNotFit
+                    elseif dataNotFit && dataNotBad
                         %Check if there are any NANs in the normalized viability we're
                         %about to fit and if there are, remove that value as well as the
                         %concentration that goes along with it;
@@ -107,47 +111,86 @@ function [dataAfterFit] = hillFitv2(bigstructNormed,dataAfterFit,folderName)
 
                                 %Have user input if the data is good, bad, or
                                 %what data to remove
-                                fitGood = input('Is the fit and data good? (enter "yes" or "no")','s');
-                                if strcmp(fitGood,'yes')
-                                    %save the fit object and gof into dataAfterFit
-                                    dataAfterFit.fitObj.IndFit.(sprintf('drug_%s',drugs{drug})).(sprintf('%s_%s',cellLines{cellLine},experiments{experiment})) = fittedHill{cellLine};
-                                    dataAfterFit.gofObj.IndFit.(sprintf('drug_%s',drugs{drug})).(sprintf('%s_%s',cellLines{cellLine},experiments{experiment})) = gof{cellLine};
-                                    skipToNextCellLine = 0;
-
-
-
-                                    %Save the data
-                                    save('dataAfterFit','dataAfterFit');
-
-                                    %Then continue to next iteration of while
-                                    %loop, which will exit while loop and move
-                                    %on in the code
-                                    continue
-                                else
-                                    removeData = input('What data to remove? (enter "all" or concentration values in a vector)','s');
-                                    if strcmp(removeData,'all')
-                                        %Delete the plot, and do not save any
-                                        %of the data, then continue
-                                        delete(sprintf('%s/matlabOutput/%s %s %s.pdf',folderName,drugs{drug},cellLines{cellLine},experiments{experiment}));
-                                        fittedHill{cellLine} = [];
-                                        gof{cellLine} = [];
-                                        skipToNextCellLine = 1;
-
-                                        %Save the data
-                                        save('dataAfterFit','dataAfterFit');
-
-                                        break
-                                    else
-                                        %Delete the specified data points from currentConcs and thisCellLine,
-                                        %remove the plot
-                                        removeData = str2num(removeData);
-                                        thisCellLine(find(ismember(currentConcs,removeData))) = [];
-                                        currentConcs(find(ismember(currentConcs,removeData))) = [];
-                                        delete(sprintf('%s/matlabOutput/%s %s %s.pdf',folderName,drugs{drug},cellLines{cellLine},experiments{experiment}));                                    skipToNextCellLine = 0;
+                                checkData = false;
+                                while checkData == false
+                                    fitGood = input('Is the fit and data good? (enter "yes" or "no")','s');
+                                    if strcmp(fitGood,'yes')
+                                        %save the fit object and gof into dataAfterFit
+                                        dataAfterFit.fitObj.IndFit.(sprintf('drug_%s',drugs{drug})).(sprintf('%s_%s',cellLines{cellLine},experiments{experiment})) = fittedHill{cellLine};
+                                        dataAfterFit.gofObj.IndFit.(sprintf('drug_%s',drugs{drug})).(sprintf('%s_%s',cellLines{cellLine},experiments{experiment})) = gof{cellLine};
                                         skipToNextCellLine = 0;
 
+
+
                                         %Save the data
                                         save('dataAfterFit','dataAfterFit');
+
+                                        %indicate data checking has happened
+                                        checkData = true;
+                                        
+                                        %Then continue to next iteration of while
+                                        %loop, which will exit while loop and move
+                                        %on in the code
+                                        continue
+                                    elseif strcmp(fitGood,'no')
+                                        dataRemoval = false;
+                                        while dataRemoval == false
+                                            removeData = input('What data to remove? (enter "all" or concentration values in a vector)','s');
+                                            if strcmp(removeData,'all')
+                                                %Delete the plot, and do not save any
+                                                %of the data, then continue
+                                                delete(sprintf('%s/matlabOutput/%s %s %s.pdf',folderName,drugs{drug},cellLines{cellLine},experiments{experiment}));
+                                                fittedHill{cellLine} = [];
+                                                gof{cellLine} = [];
+                                                skipToNextCellLine = 1;
+                                                
+                                                %Indicate that this cell
+                                                %line/drug is bad data
+                                                dataAfterFit.fitParams.badData{end+1} = sprintf('drug_%s_%s_%s',drugs{drug},cellLines{cellLine},experiments{experiment});
+
+                                                %Save the data
+                                                save('dataAfterFit','dataAfterFit');
+
+                                                %indicate data removal has happened
+                                                dataRemoval = true;
+                                                
+                                                %indicate data checking has happened
+                                                checkData = true;
+                                                
+                                                %indicate that the fit is
+                                                %'good' aka in this case,
+                                                %removed
+                                                fitGood = 'yes';
+
+                                            elseif isnumeric(removeData)
+                                                %Delete the specified data points from currentConcs and thisCellLine,
+                                                %remove the plot
+                                                removeData = str2num(removeData);
+                                                thisCellLine(find(ismember(currentConcs,removeData))) = [];
+                                                currentConcs(find(ismember(currentConcs,removeData))) = [];
+                                                delete(sprintf('%s/matlabOutput/%s %s %s.pdf',folderName,drugs{drug},cellLines{cellLine},experiments{experiment}));                                    skipToNextCellLine = 0;
+                                                skipToNextCellLine = 0;
+
+                                                %Save the data
+                                                save('dataAfterFit','dataAfterFit');
+
+                                                %indicate data removal has happened
+                                                dataRemoval = true;
+                                                
+                                                %indicate data checking has happened
+                                                checkData = true;
+                                            else
+                                                %the input was neither 'all'
+                                                %nor a vector so there was a
+                                                %typo.  try again.
+                                                'I think there was a typo... Try again.'
+                                            end
+                                        end
+                                    else
+                                        %the input was neither 'yes'
+                                        %nor 'no' so there was a
+                                        %typo.  try again.
+                                        'I think there was a typo... Try again.' 
                                     end
                                 end
 
@@ -241,6 +284,7 @@ function [dataAfterFit] = hillFitv2(bigstructNormed,dataAfterFit,folderName)
                         end
                         %Indicate that this cell line/drug is done
                         dataAfterFit.fitParams.dataFit{end+1} = sprintf('drug_%s_%s_%s',drugs{drug},cellLines{cellLine},experiments{experiment});
+                        save('dataAfterFit','dataAfterFit');
                     end
                 end
             end

@@ -25,14 +25,6 @@ function barPlotsEC50s(dataAfterFit,folder)
     drugs = fieldnames(dataAfterFit.rawData);
     drugs = cellfun(@(x) x(6:end),drugs,'UniformOutput',false);
     
-    %First set up log of what data has been plotted.
-    if ~isfield(dataAfterFit.fitParams,'dataPlotted')
-        dataAfterFit.fitParams.dataPlotted = cell(0);
-    end
-    
-    %Make the figures invisible so it runs faster.
-    %p = figure('visible','off');
-    
     for drug = 1:size(drugs,1)
         clf
         %Find the measurements of the parental EC50
@@ -49,20 +41,15 @@ function barPlotsEC50s(dataAfterFit,folder)
         %This next bit makes the dot plot
         dmean = nanmean(currentEC50s,1);                                                                             % Mean
         for cellLine = 1:size(cellLines,1)
-            
             cellLineEC50s = currentEC50s(:,cellLine);
             dci(cellLine) = nanstd(cellLineEC50s)*tinv(0.975,size(cellLineEC50s(~isnan(cellLineEC50s)),1)-1);   % Confidence Intervals
             sem(cellLine) = nanstd(cellLineEC50s)/sqrt(size(cellLineEC50s(~isnan(cellLineEC50s)),1));           %SEM
-
-            
         end
-        
         xt = [1:size(currentEC50s,2)];                                                                          % X-Ticks
         xtd = repmat(xt, size(currentEC50s,1), 1);                                                              % X-Ticks For Data
         sb = [xt'-ones(size(currentEC50s,2),1)*0.1,  xt'+ones(size(currentEC50s,2),1)*0.1];                     % Short Bar X
         lb = [xt'-ones(size(currentEC50s,2),1)*0.2,  xt'+ones(size(currentEC50s,2),1)*0.2];                     % Long Bar X
 
-        
         figure(1)
         plot(xt, currentEC50s, 'o', 'MarkerEdgeColor','k','MarkerFaceColor', 'k','MarkerSize',3)
         hold on

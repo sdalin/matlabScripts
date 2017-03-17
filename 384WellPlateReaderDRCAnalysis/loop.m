@@ -12,11 +12,11 @@
 
 %be sure to modify the filename to fit your needs.
 
-load('/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts/384wellPlateReaderDRCAnalysis/dataAfterFit');
+load('/Users/sdalin/Desktop/384WellPlateReaderDRCAnalysis/dataAfterFit');
 bigstructNormed = struct;
 %this is going to be a nested struct containing ALL the data.  First level
 %is different days of data collection.  Second level is separate plates on each day and one plate with 'info' ie, drug names and concentrations.
-folderName = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2016/Hemann Lab/CR.CS/DRCs on Resistant Cells/Resistant Cells Round 3/DRCs 161115/Data/';
+folderName = '/Users/sdalin/Desktop/384WellPlateReaderDRCAnalysis/Data/';
 list=dir(sprintf('%s*.xlsx',folderName));
 for i = 1:length(list);
     filename = sprintf('%s%s',folderName,list(i).name);
@@ -24,19 +24,25 @@ for i = 1:length(list);
 end
 
 %Get fits of all raw data in this folder  
+%First make some folders to store images in
 if ~isdir(sprintf('%s../matlabOutput',folderName))
     mkdir(sprintf('%s../matlabOutput',folderName));
 end
+
+if ~isdir(sprintf('%s../matlabOutput/rawDRCs',folderName))
+    mkdir(sprintf('%s../matlabOutput/rawDRCs',folderName));
+end
+
+if ~isdir(sprintf('%s../matlabOutput/rejectedFits',folderName))
+    mkdir(sprintf('%s../matlabOutput/rejectedFits',folderName));
+end
+
 folderName = sprintf('%s..',folderName);
 
-%Calculate fits of individual data, all replicates, and put graphs pf individual fits in the
+%Calculate fits of individual data, all replicates, and put graphs of individual fits in the
 %folder above.
-[dataAfterFit] = hillFitv2(bigstructNormed,dataAfterFit,folderName);
+[dataAfterFit,drugsCellLinesThisFolder] = hillFitv3(bigstructNormed,dataAfterFit,folderName);
 save('dataAfterFit','dataAfterFit')
-
-%Make plots with all replicates of a given cell line/drug pair on teh same
-%plot, and save it into a folder called replicateDRCPlots
-replicateDrugDRCPlots(dataAfterFit,folderName);
 
 %Calculate all Log2FC's
 [dataAfterFit] = calcLog2FC(dataAfterFit);
@@ -49,10 +55,15 @@ heatmapFromLog2FCs(dataAfterFit,folderName);
 %where the parental EC50 is
 barPlotsEC50s(dataAfterFit,folderName);
 
+%Make DRC plots for each drug with all cell lines in this particular folder
+load('/Users/sdalin/Desktop/384WellPlateReaderDRCAnalysis/matlabOutput/drugsCellLinesThisFolder');
+replicateDrugDRCPlots(dataAfterFit,drugsCellLinesThisFolder,folderName);
+
 %Select which cell lines and drugs to plot
 [selectedDrugs,selectedCellLines] = selectDataToPlot(dataAfterFit);
 
-%Make DRC plots for each drug with all cell lines
+%Make plots with all replicates of selected cell line/drug pair on the same
+%plot, and save it into a folder called replicateDRCPlots
 drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folderName);
 
 

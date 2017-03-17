@@ -52,11 +52,11 @@ function [dataAfterFit] = calcLog2FC(dataAfterFit)
         for drug = 1:size(drugs,1)
             %On first iteration, add a row to FC fields with
             %the experiment name
-            if isempty(dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).Log2FC)
+            if ~isfield(dataAfterFit.fitParams.(drugs{drug}),'Log2FC') %the drug has never had a log2FC calculated before
                 dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).Log2FC = {[];experiments{experiment}};
-            elseif ~isfield(dataAfterFit.fitParams,sprintf('%s',drugs{drug}))
+            elseif isempty(dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).Log2FC) %A log2FC field exists but is empty
                 dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).Log2FC = {[];experiments{experiment}};
-            elseif isfield(dataAfterFit.fitParams,sprintf('%s',drugs{drug})) && sum(strcmp(dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).Log2FC(:,1),experiments{experiment}))==0
+            elseif isfield(dataAfterFit.fitParams,sprintf('%s',drugs{drug})) && sum(strcmp(dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).Log2FC(:,1),experiments{experiment}))==0 %the field exists and other log2FCs have been calculated, but not for this experiment.
                 dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).Log2FC = [dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).Log2FC;cell(1,size(dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).Log2FC,2))];
                 dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).Log2FC(end,1) = experiments(experiment);
             end
