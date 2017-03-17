@@ -34,6 +34,10 @@ folderName = sprintf('%s..',folderName);
 [dataAfterFit] = hillFitv2(bigstructNormed,dataAfterFit,folderName);
 save('dataAfterFit','dataAfterFit')
 
+%Make plots with all replicates of a given cell line/drug pair on teh same
+%plot, and save it into a folder called replicateDRCPlots
+replicateDrugDRCPlots(dataAfterFit,folderName);
+
 %Calculate all Log2FC's
 [dataAfterFit] = calcLog2FC(dataAfterFit);
 save('dataAfterFit','dataAfterFit')

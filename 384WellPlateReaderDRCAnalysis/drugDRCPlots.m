@@ -17,7 +17,7 @@
 %Also folder is the path to the folder with the bar charts should be stored.
 
 %OUTPUT:
-%DRC plots as descriped above in folder.
+%DRC plots as descriped above in folder. 
 
 function drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folder)
     addpath('/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts/kakearney-legendflex-pkg-98b988e/legendflex','/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts/kakearney-legendflex-pkg-98b988e/setgetpos_V1.2');
@@ -26,6 +26,16 @@ function drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folder)
     drugs = selectedDrugs;
     drugs = cellfun(@(x) x(6:end),drugs,'UniformOutput',false);
     allDrugs = fieldnames(dataAfterFit.rawData);
+    
+    
+    %First set up log of what data has been analyzed.
+    if ~isfield(dataAfterFit.fitParams,'dataFit')
+        dataAfterFit.fitParams.dataFit = cell(0);
+    end
+    
+    %This next line will hide the figures which will probably speeds up
+    %running, if you want that
+    %p = figure('visible','off');
     
     for drug = 1:size(drugs,1)
         allCellLines = fieldnames(dataAfterFit.rawData.(sprintf('drug_%s',drugs{drug})));
@@ -42,16 +52,17 @@ function drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folder)
         lineHandles = gobjects(size(cellLines,1),1);
         
         for cellLine = 1:size(cellLines,1)
+            
             fittedHill = dataAfterFit.fitObj.allDataFit.(sprintf('drug_%s',drugs{drug})).(cellLines{cellLine});
             concs = dataAfterFit.rawData.(sprintf('drug_%s',drugs{drug})).(cellLines{cellLine})(:,1);
             viability = dataAfterFit.rawData.(sprintf('drug_%s',drugs{drug})).(cellLines{cellLine})(:,2);
-            
+
             %Make concentrations and viabilities into matrixes for ease of
             %processing
             concentrations = unique(cell2mat(concs));
             concsMat = cell2mat(concs);
             viabilities = cell2mat(viability);
-            
+
             %Calculate mean and SEM of all viabilities for each
             %concentration
             sem = nan(size(concentrations,1),1);
@@ -61,12 +72,9 @@ function drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folder)
                 sem(concentration,1) = nanstd(currentViabilities)/sqrt(size(currentViabilities(~isnan(currentViabilities)),1));           
                 means(concentration,1) = nanmean(currentViabilities);
             end
-            
-            %This next line will hide the figures which will probably speeds up
-            %running, if you want that
-            %p = figure('visible','off');
+
             p = plot(fittedHill,concentrations,means);
-       
+
             %Change the way it looks so its easily readable
             %Set the parental curve to black and other curves to rainbow
             %colors
@@ -77,7 +85,7 @@ function drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folder)
                 set(p,'Color',colorvec(cellLine,:));
                 set(p,'LineWidth',1);
             end
-            
+
             set(p,'DisplayName',(cellLines{cellLine}));  
             axis([-inf,inf,-0.2,1.2])
             set(gca,'XScale','log');
@@ -86,27 +94,28 @@ function drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folder)
             ylabel('Viability','FontSize',13);
             legend('off');
             title(sprintf(drugs{drug}),'FontSize',15);
-            
+
             %Extract data for making seperate legend file
             legendInfo(cellLine)=cellstr(get(p(2),'DisplayName'));
-            
+
             %Save the line handle into a struct and extract the line handle
             %into this nifty graphics objects array
             handles.(cellLines{cellLine}) = p;
             lineHandles(cellLine,1) = handles.(cellLines{cellLine})(2,1);
-            
+
             %Keep plot here for the error bars
             hold on
-            
+
             %Put in the error bars
              if strcmp(cellLines{cellLine},'Parental')
                 errorbar(concentrations,means,sem,'Color',[0,0,0],'Linestyle','none','LineWidth',2)
              else
                 errorbar(concentrations,means,sem,'Color',colorvec(cellLine,:),'Linestyle','none')
             end
-            
+
             %keep keeping the plot on for the next plot
             hold on
+            
             
         end 
         
@@ -121,8 +130,8 @@ function drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folder)
           
         %Save into subfolder of raw data (called 'DRCPlots')
         cd(sprintf('%s/matlabOutput/DRCPlots',folder))
-        set(gcf,'paperpositionmode','auto')
-        %set(gcf,'Renderer','OpenGL')
+        %set(gcf,'paperpositionmode','auto')
+        set(gcf,'Renderer','OpenGL')
         if sum(length(drugs) == length(allDrugs)) && sum(length(selectedCellLines) == length(allCellLines'))
             print(sprintf('%s DRC plot',(drugs{drug})),'-dpdf','-bestfit');
         else
