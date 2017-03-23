@@ -11,12 +11,11 @@
 %wells.
 
 %be sure to modify the filename to fit your needs.
-
-load('/Users/sdalin/Desktop/384WellPlateReaderDRCAnalysis/dataAfterFit');
+load('/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts/384WellPlateReaderDRCAnalysis/dataAfterFit');
 bigstructNormed = struct;
 %this is going to be a nested struct containing ALL the data.  First level
 %is different days of data collection.  Second level is separate plates on each day and one plate with 'info' ie, drug names and concentrations.
-folderName = '/Users/sdalin/Desktop/384WellPlateReaderDRCAnalysis/Data/';
+folderName = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2017/Hemann Lab/CR.CS/DRCs on resistant cells/Resistant Cells Round 3/Raw Data weeks of 161118 170213 170227 170313/';
 list=dir(sprintf('%s*.xlsx',folderName));
 for i = 1:length(list);
     filename = sprintf('%s%s',folderName,list(i).name);
@@ -25,19 +24,19 @@ end
 
 %Get fits of all raw data in this folder  
 %First make some folders to store images in
-if ~isdir(sprintf('%s../matlabOutput',folderName))
-    mkdir(sprintf('%s../matlabOutput',folderName));
+if ~isdir(sprintf('%s/matlabOutput',folderName))
+    mkdir(sprintf('%s/matlabOutput',folderName));
 end
 
-if ~isdir(sprintf('%s../matlabOutput/rawDRCs',folderName))
-    mkdir(sprintf('%s../matlabOutput/rawDRCs',folderName));
+if ~isdir(sprintf('%s/matlabOutput/rawDRCs',folderName))
+    mkdir(sprintf('%s/matlabOutput/rawDRCs',folderName));
 end
 
-if ~isdir(sprintf('%s../matlabOutput/rejectedFits',folderName))
-    mkdir(sprintf('%s../matlabOutput/rejectedFits',folderName));
+if ~isdir(sprintf('%s/matlabOutput/rejectedFits',folderName))
+    mkdir(sprintf('%s/matlabOutput/rejectedFits',folderName));
 end
 
-folderName = sprintf('%s..',folderName);
+%folderName = sprintf('%s..',folderName);
 
 %Calculate fits of individual data, all replicates, and put graphs of individual fits in the
 %folder above.
@@ -56,7 +55,7 @@ heatmapFromLog2FCs(dataAfterFit,folderName);
 barPlotsEC50s(dataAfterFit,folderName);
 
 %Make DRC plots for each drug with all cell lines in this particular folder
-load('/Users/sdalin/Desktop/384WellPlateReaderDRCAnalysis/matlabOutput/drugsCellLinesThisFolder');
+load('/Users/sdalin/Dropbox (MIT)/Biology PhD/2017/Hemann Lab/CR.CS/DRCs on resistant cells/Resistant Cells Round 3/Raw Data weeks of 161118 170213 170227 170313/matlabOutput/drugsCellLinesThisFolder');
 replicateDrugDRCPlots(dataAfterFit,drugsCellLinesThisFolder,folderName);
 
 %Select which cell lines and drugs to plot
