@@ -30,6 +30,11 @@ function drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folder)
     for drug = 1:size(drugs,1)
         allCellLines = fieldnames(dataAfterFit.rawData.(sprintf('drug_%s',drugs{drug})));
         cellLines = intersect(allCellLines,selectedCellLines);
+        
+        if isempty(cellLines) %If this drug/cell line pair doesn't exist, skip it.
+            continue
+        end
+        
         clf
         %This sets up the colors for the cell lines in the plots
         colorvec = hsv(size(cellLines,1));
