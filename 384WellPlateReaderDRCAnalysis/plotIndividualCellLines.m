@@ -51,5 +51,5 @@ function plotIndividualCellLines(fittedHill,fittedHillNoOutliers,concs,viability
     set(gcf,'paperpositionmode','auto')
     %set(gcf,'Renderer','OpenGL')
     print(sprintf('%s %s %s.pdf',drug,cellLine,experiment),'-dpdf');%,'-bestfit');
-    cd(folder);
+    cd('/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts/384WellPlateReaderDRCAnalysis');
 end
