@@ -20,14 +20,24 @@
 %OUTPUT:
 %A heatmap as descriped above in folder.
 
-function heatmapFromLog2FCs(dataAfterFit,folder)
+function [heatmapMatrixCleaned,cellLines,drugsCleaned] = heatmapFromLog2FCs(dataAfterFit,folder,stars,varargin)
     
+    close all hidden
     %First get all the Log2FCs averaged (ignoring []'s/Nan's) and put into
     %a matrix with rows as cell lines and columns as drugs
     drugs = fieldnames(dataAfterFit.rawData);
     drugs = cellfun(@(x) x(6:end),drugs,'UniformOutput',false);
 
     cellLines = fieldnames(dataAfterFit.rawData.(sprintf('drug_%s',drugs{1})));
+    
+    %Extract just cell lines resistant to a particular drug, to make
+    %individual heatmaps
+    if nargin > 3
+        cellLinesOneDrug = cellLines(strncmpi(cellLines,varargin{1},3));
+        cellLinesDMSO = cellLines(strncmpi(cellLines,'DMSO',4));
+        cellLines = vertcat(cellLinesOneDrug,cellLinesDMSO);
+    end
+   
    
     %Initialize the matrix
     heatmapMatrix = [];
@@ -66,8 +76,8 @@ function heatmapFromLog2FCs(dataAfterFit,folder)
         end
     end
     
-    %strip nans because they make clustergram error
-    %heatmapMatrix(isnan(heatmapMatrix)) = 0;
+    
+    
     
     %Get values for heatmap scale
     log2ScaleMax = max(max(heatmapMatrix));
@@ -76,24 +86,72 @@ function heatmapFromLog2FCs(dataAfterFit,folder)
     
     %Make heatmap!
     cellLines = regexprep(cellLines,'_',' ');
-    foldChangeHeatmap = clustergram(heatmapMatrix,'RowLabels',cellLines,'ColumnLabels',drugs,'DisplayRange',log2Scale,'Symmetric','true','Colormap',redbluecmap,'RowLabelsRotate',0,'ImputeFun',@knnimpute);
-    
 
-    plot(foldChangeHeatmap);
+    %Remove drugs with data for less than half the cell lines
+    heatmapMatrixCleaned = heatmapMatrix(:,sum(~isnan(heatmapMatrix))>size(heatmapMatrix,1)/2);
+    drugsCleaned = drugs(sum(~isnan(heatmapMatrix))>size(heatmapMatrix,1)/2);
     
-    %Somehow this bit is supposed to make the colorbar but its failing
-    %miserably. 
-    %colormap(redbluecmap(256));
-    %imagesc(heatmapMatrix,[-log2Scale log2Scale]);
-    %colorbar;
+    %Remove drugs with log2(FC) >|1| in >2 DMSO control lines
+    heatmapMatrixDMSOLines = heatmapMatrixCleaned(strncmp('DMSO',cellLines,4),:);
+    heatmapMatrixNoArtifact = heatmapMatrixCleaned(:,~(sum(heatmapMatrixDMSOLines < -1) > 2));
+    drugsNoArtifact = drugsCleaned(~(sum(heatmapMatrixDMSOLines < -1) > 2));
+    
+    
+    foldChangeHeatmap = clustergram(heatmapMatrixNoArtifact,'RowLabels',cellLines,'ColumnLabels',drugsNoArtifact,'DisplayRange',log2Scale,'Symmetric','true','Colormap',redbluecmap,'RowLabelsRotate',0,'ImputeFun',@knnimpute);
+    
+    
+    p = plot(foldChangeHeatmap);
+    
+    %adjust the colorbar to look nice
+    colorBar = findobj('Tag','HeatMapColorbar');
+    colorBar.FontSize = 10;
+    colorBar.Position = [0.075,0.125,0.01,0.6];
+    
+    hold on
+    for cellLine = 1:size(foldChangeHeatmap.RowLabels,1)
+        for drug = 1:size(foldChangeHeatmap.ColumnLabels,2)
+            [drugRow,col] = find(strcmp(stars,sprintf('%s',foldChangeHeatmap.ColumnLabels{drug})));
+            [heatmapDrugRow,col] = find(strcmp(drugsNoArtifact,sprintf('%s',foldChangeHeatmap.ColumnLabels{drug})));
+            [row,cellLineColumn] = find(strcmp(stars,sprintf('%s',foldChangeHeatmap.RowLabels{cellLine})));
+            [heatmapCellLineColumn,tmp] = find(strcmp(cellLines,sprintf('%s',foldChangeHeatmap.RowLabels{cellLine})));
+            
+            if ~isempty(stars{drugRow,cellLineColumn}) && ~isnan(heatmapMatrixNoArtifact(heatmapCellLineColumn,heatmapDrugRow))
+                if nargin > 3
+                    starText = text(p,drug,cellLine,char(stars{drugRow,cellLineColumn}),'Color',[0.5 0.5 0.5],'HorizontalAlignment','center','VerticalAlignment','middle');
+                else
+                    starText = text(p,drug,cellLine-0.5,char(stars{drugRow,cellLineColumn}),'Color',[0.5 0.5 0.5],'HorizontalAlignment','center','VerticalAlignment','middle');
+                end
+            end
+        end
+    end
+    
+    y = size(foldChangeHeatmap.RowLabels,1)+(size(foldChangeHeatmap.RowLabels,1)*((130-112)/112));
+    x = size(foldChangeHeatmap.ColumnLabels,2)+(size(foldChangeHeatmap.ColumnLabels,2)*((-3-20)/20));
+    log2FCText = text(p,x,y,'Log_{2}\DeltaEC50','HorizontalAlignment','center','Interpreter','tex','FontSize',15);
+    
+    y = size(foldChangeHeatmap.RowLabels,1)+(size(foldChangeHeatmap.RowLabels,1)*((115-112)/112));
+    x = size(foldChangeHeatmap.ColumnLabels,2)+(size(foldChangeHeatmap.ColumnLabels,2)*((-5.2-20)/20)); 
+    colResText = text(p,x,y,'ColRes','HorizontalAlignment','center','Color',[0.4039 0 0.1216]);
+    
+    y = size(foldChangeHeatmap.RowLabels,1)+(size(foldChangeHeatmap.RowLabels,1)*((-1-112)/112));
+    x = size(foldChangeHeatmap.ColumnLabels,2)+(size(foldChangeHeatmap.ColumnLabels,2)*((-5.2-20)/20)); 
+    colSenText = text(p,x,y,'ColSen','HorizontalAlignment','center','Color',[0.0196 0.1882 0.3804]);
+    
     
     %Save into folder with raw data
-    cd(sprintf('%s/matlabOutput',folder))
-    set(gcf,'paperpositionmode','auto')
-    %set(gcf,'Renderer','OpenGL')
-    print('heatmapAllData','-dpdf','-bestfit');
-    cd('/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts/384WellPlateReaderDRCAnalysis')
+    cd(sprintf('%smatlabOutput',folder))
+    set(gcf,'paperpositionmode','manual')
+    set(gcf,'PaperUnits','inches')
+    set(gcf,'paperposition',[-0.30 -0.25 9 12])
+    set(gcf,'Renderer','OpenGL')
+    if nargin > 3
+        print(sprintf('heatmapAllData_%s',varargin{1}),'-dpdf');
+    else
+        print('heatmapAllData','-dpdf');
+    end
+    cd(sprintf('%s../',folder))
     
+    clf
     close all hidden
-
+    
 end

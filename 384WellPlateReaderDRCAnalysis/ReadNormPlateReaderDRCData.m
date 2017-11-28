@@ -37,6 +37,7 @@ function [bigstructNormed] = ReadNormPlateReaderDRCData(filename)
             %Grab the cell line name from this sheet
             [num,cellLine,raw] = xlsread(filename,sheet,'E12');
             cellLine = strrep(cellLine,' ','_');
+            cellLine = strrep(cellLine,',','');
             bigstruct.(sprintf('%s',char(cellLine))) = rawFluorescence;
         end
     end

@@ -21,7 +21,7 @@
 %OUTPUT:
 %Within dataAfterFit.fitParams, within each drug's field, within the Log2FC
 %field, new Log2FC values are added to the appropriate row/column of the
-%struct array.  Also the 'dataRan' field is updated with the name of each
+%struct array.  Also the 'dataLog2Calcd' field is updated with the name of each
 %cellLine/Drug/Experiment as it is run.
 
 function [dataAfterFit] = calcLog2FC(dataAfterFit)
@@ -35,17 +35,20 @@ function [dataAfterFit] = calcLog2FC(dataAfterFit)
     %cell lines
     drugs = fieldnames(dataAfterFit.rawData);
     allExperiments = dataAfterFit.fitParams.(drugs{1}).EC50(2:end,1);
-    if isempty(dataAfterFit.fitParams.(drugs{1}).Log2FC)
+    if ~isfield(dataAfterFit.fitParams.(drugs{1}),'Log2FC')
         completedExperiments = cell(0);
-    else
+    elseif ~isempty(dataAfterFit.fitParams.(drugs{1}).Log2FC)
         completedExperiments = dataAfterFit.fitParams.(drugs{1}).Log2FC(2:end,1);
+    else
+        whut
     end
-    experiments = setdiff(allExperiments,completedExperiments);
+    %experiments = setdiff(allExperiments,completedExperiments);
+    experiments = allExperiments;
     cellLines = fieldnames(dataAfterFit.rawData.(drugs{1}));
   
     %First set up log of what data has been analyzed.
-    if ~isfield(dataAfterFit.fitParams,'dataRan')
-        dataAfterFit.fitParams.dataRan = cell(0);
+    if ~isfield(dataAfterFit.fitParams,'dataLog2Calcd')
+        dataAfterFit.fitParams.dataLog2Calcd = cell(0);
     end
     
     for experiment = 1:size(experiments,1)
@@ -69,9 +72,16 @@ function [dataAfterFit] = calcLog2FC(dataAfterFit)
             parentalEC50 = dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).EC50(rowParental,columnParental);
             if ~isempty(cell2mat(parentalEC50))
                 for cellLine = 1:size(cellLines,1)
+                    
+                    %Only continue if this experiment/cellLine/drug was
+                    %actually fit
+                    if ~sum(ismember(dataAfterFit.fitParams.dataFit,sprintf('%s_%s_%s',drugs{drug},cellLines{cellLine},experiments{experiment}))) > 0
+                        continue
+                    end
+
                     %Check if this experiment/cellLine/drug has already
                     %been run
-                    if ~sum(ismember(dataAfterFit.fitParams.dataRan,sprintf('%s_%s_%s',drugs{drug},cellLines{cellLine},experiments{experiment})))
+                    if ~sum(ismember(dataAfterFit.fitParams.dataLog2Calcd,sprintf('%s_%s_%s',drugs{drug},cellLines{cellLine},experiments{experiment})))
                         columnCurrentEC50 = find(strcmp(dataAfterFit.fitParams.(sprintf('%s',drugs{drug})).EC50(1,:),cellLines{cellLine}));
                         
                         %only continue if the current cell line has data
@@ -98,7 +108,7 @@ function [dataAfterFit] = calcLog2FC(dataAfterFit)
                             end
                         end
                     end
-                    dataAfterFit.fitParams.dataRan{end+1} = sprintf('%s_%s_%s',drugs{drug},cellLines{cellLine},experiments{experiment});
+                    dataAfterFit.fitParams.dataLog2Calcd{end+1} = sprintf('%s_%s_%s',drugs{drug},cellLines{cellLine},experiments{experiment});
                 end
             end
         end

@@ -11,11 +11,11 @@
 %wells.
 
 %be sure to modify the filename to fit your needs.
-load('/Users/sdalin/Dropbox (MIT)/Biology PhD/Matlab Scripts/384WellPlateReaderDRCAnalysis/dataAfterFit');
+directory = pwd;
 bigstructNormed = struct;
 %this is going to be a nested struct containing ALL the data.  First level
 %is different days of data collection.  Second level is separate plates on each day and one plate with 'info' ie, drug names and concentrations.
-folderName = '/Users/sdalin/Dropbox (MIT)/Biology PhD/2017/Hemann Lab/CR.CS/DRCs on resistant cells/Resistant Cells Round 3/Raw Data weeks of 161118 170213 170227 170313/';
+folderName = sprintf('%s/Raw Data weeks of 161118 170213 170227 170313/',directory);
 list=dir(sprintf('%s*.xlsx',folderName));
 for i = 1:length(list);
     filename = sprintf('%s%s',folderName,list(i).name);
@@ -40,24 +40,31 @@ end
 
 %Calculate fits of individual data, all replicates, and put graphs of individual fits in the
 %folder above.
-[dataAfterFit,drugsCellLinesThisFolder] = hillFitv3(bigstructNormed,dataAfterFit,folderName);
-save('dataAfterFit','dataAfterFit')
+[drugsCellLinesThisFolder] = hillFitAll(bigstructNormed,folderName);
 
 %Calculate all Log2FC's
+load('dataAfterFit','dataAfterFit');
 [dataAfterFit] = calcLog2FC(dataAfterFit);
 save('dataAfterFit','dataAfterFit')
 
-%Make heatmap of log fold changes averaged
-heatmapFromLog2FCs(dataAfterFit,folderName);
-
 %Make bar plot of raw EC50s with stderr bars, and a dotted horizontal line
 %where the parental EC50 is
-barPlotsEC50s(dataAfterFit,folderName);
+[h,p,stars] = barPlotsEC50s(dataAfterFit,folderName);
+
+%Make heatmap of log fold changes averaged
+[heatmapMatrixAll,cellLinesAll,drugsCleanedAll] = heatmapFromLog2FCs(dataAfterFit,folderName,stars);
+[heatmapMatrixDox,cellLinesDox,drugsCleanedDox] = heatmapFromLog2FCs(dataAfterFit,folderName,stars,'Dox');
+[heatmapMatrixVin,cellLinesVin,drugsCleanedVin] = heatmapFromLog2FCs(dataAfterFit,folderName,stars,'Vin');
+[heatmapMatrixPac,cellLinesPac,drugsCleanedPac] = heatmapFromLog2FCs(dataAfterFit,folderName,stars,'Pac');
+[heatmapMatrixCis,cellLinesCis,drugsCleanedCis] = heatmapFromLog2FCs(dataAfterFit,folderName,stars,'Cis');
 
 %Make DRC plots for each drug with all cell lines in this particular folder
-load('/Users/sdalin/Dropbox (MIT)/Biology PhD/2017/Hemann Lab/CR.CS/DRCs on resistant cells/Resistant Cells Round 3/Raw Data weeks of 161118 170213 170227 170313/matlabOutput/drugsCellLinesThisFolder');
+load(sprintf('%s/Raw Data weeks of 161118 170213 170227 170313/matlabOutput/drugsCellLinesThisFolder',directory));
 replicateDrugDRCPlots(dataAfterFit,drugsCellLinesThisFolder,folderName);
 
+
+
+%% This bit can't be run on the cluster
 %Select which cell lines and drugs to plot
 [selectedDrugs,selectedCellLines] = selectDataToPlot(dataAfterFit);
 
@@ -66,17 +73,18 @@ replicateDrugDRCPlots(dataAfterFit,drugsCellLinesThisFolder,folderName);
 drugDRCPlots(dataAfterFit,selectedDrugs,selectedCellLines,folderName);
 
 
-%%
-%Everything below here is just tests and stuff
 
-%Get values for heatmap scale
-log2ScaleMax = max(max(log2FoldChangesnoEu));
-log2ScaleMin = min(min(log2FoldChangesnoEu));
-log2Scale = max(log2ScaleMax,abs(log2ScaleMin));
-
-%Make heatmap!
-foldChangeHeatmap = clustergram(log2FoldChangesnoEu','RowLabels',drugNames,'ColumnLabels',cellLinesnoEu,'DisplayRange',log2Scale,'Symmetric','true','Colormap',redbluecmap,'ColumnLabelsRotate',0);
-plot(foldChangeHeatmap);
-colormap(redbluecmap(256));
-imagesc(log2FoldChangesnoEu',[-log2Scale log2Scale]);
-colorbar;
+%% I'm not sure what this bit is.
+% %Everything below here is just tests and stuff
+% 
+% %Get values for heatmap scale
+% log2ScaleMax = max(max(log2FoldChangesnoEu));
+% log2ScaleMin = min(min(log2FoldChangesnoEu));
+% log2Scale = max(log2ScaleMax,abs(log2ScaleMin));
+% 
+% %Make heatmap!
+% foldChangeHeatmap = clustergram(log2FoldChangesnoEu','RowLabels',drugNames,'ColumnLabels',cellLinesnoEu,'DisplayRange',log2Scale,'Symmetric','true','Colormap',redbluecmap,'ColumnLabelsRotate',0);
+% plot(foldChangeHeatmap);
+% colormap(redbluecmap(256));
+% imagesc(log2FoldChangesnoEu',[-log2Scale log2Scale]);
+% colorbar;
