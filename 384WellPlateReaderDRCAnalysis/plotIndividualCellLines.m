@@ -29,7 +29,7 @@ function plotIndividualCellLines(fittedHill,fittedHillNoOutliers,concs,viability
 
     %Change the way it looks so its easily readable
     set(p,'LineWidth',2);  
-    axis([-inf,inf,-0.2,1.2])
+    axis([-inf,inf,-0.2,2.0])
     set(gca,'XScale','log');
     xlabel('Drug Concentration (uM)','FontSize',13);
     ylabel('Viability %','FontSize',13);

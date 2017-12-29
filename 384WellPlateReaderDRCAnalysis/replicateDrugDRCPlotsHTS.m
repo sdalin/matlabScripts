@@ -19,7 +19,7 @@
 %OUTPUT:
 %DRC plots as descriped above in folder.
 
-function replicateDrugDRCPlots(dataAfterFit,drugsCellLinesThisFolder,folder)
+function replicateDrugDRCPlotsHTS(dataAfterFit,drugsCellLinesThisFolder,folder)
     addpath('/home/sdalin/DRC Analysis for Cluster/kakearney-legendflex-pkg-98b988e/legendflex','/home/sdalin/DRC Analysis for Cluster/kakearney-legendflex-pkg-98b988e/setgetpos_V1.2');
 
     mkdir(sprintf('%s/matlabOutput/ReplicateDRCPlots',folder))
@@ -76,7 +76,7 @@ function replicateDrugDRCPlots(dataAfterFit,drugsCellLinesThisFolder,folder)
                 continue
             end
             
-            replicateFitNames = allFits(strncmp(sprintf('%s_d',cellLines{cellLine}),allFits,length(cellLines{cellLine})+2));
+            replicateFitNames = allFits(strncmp(sprintf('%s_',cellLines{cellLine}),allFits,length(cellLines{cellLine})));
             
             
             %This sets up the colors for the cell lines in the plots

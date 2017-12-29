@@ -88,16 +88,26 @@ function [heatmapMatrixCleaned,cellLines,drugsCleaned] = heatmapFromLog2FCs(data
     cellLines = regexprep(cellLines,'_',' ');
 
     %Remove drugs with data for less than half the cell lines
-    heatmapMatrixCleaned = heatmapMatrix(:,sum(~isnan(heatmapMatrix))>size(heatmapMatrix,1)/2);
-    drugsCleaned = drugs(sum(~isnan(heatmapMatrix))>size(heatmapMatrix,1)/2);
+    if size(heatmapMatrix,1) == 1
+        heatmapMatrixCleaned = heatmapMatrix;
+        drugsCleaned = drugs;
+    else
+        heatmapMatrixCleaned = heatmapMatrix(:,sum(~isnan(heatmapMatrix))>size(heatmapMatrix,1)/2);
+        drugsCleaned = drugs(sum(~isnan(heatmapMatrix))>size(heatmapMatrix,1)/2);
+    end
     
     %Remove drugs with log2(FC) >|1| in >2 DMSO control lines
     heatmapMatrixDMSOLines = heatmapMatrixCleaned(strncmp('DMSO',cellLines,4),:);
     heatmapMatrixNoArtifact = heatmapMatrixCleaned(:,~(sum(heatmapMatrixDMSOLines < -1) > 2));
     drugsNoArtifact = drugsCleaned(~(sum(heatmapMatrixDMSOLines < -1) > 2));
     
-    
-    foldChangeHeatmap = clustergram(heatmapMatrixNoArtifact,'RowLabels',cellLines,'ColumnLabels',drugsNoArtifact,'DisplayRange',log2Scale,'Symmetric','true','Colormap',redbluecmap,'RowLabelsRotate',0,'ImputeFun',@knnimpute);
+    if size(heatmapMatrix,1) == 1
+        clustVal = 2;
+    else
+        clustVal = 3;
+    end
+        
+    foldChangeHeatmap = clustergram(heatmapMatrixNoArtifact,'RowLabels',cellLines,'ColumnLabels',drugsNoArtifact,'DisplayRange',log2Scale,'Symmetric','true','Colormap',redbluecmap,'RowLabelsRotate',0,'ImputeFun',@knnimpute,'Cluster',clustVal);
     
     
     p = plot(foldChangeHeatmap);

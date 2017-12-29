@@ -69,9 +69,17 @@ function [h,p,stars] = barPlotsEC50s(dataAfterFit,folder)
             [row,cellLineColumn] = find(strcmp(h,sprintf('%s',cellLines{cellLine})));
             
             for alpha = 1:size(newAlpha,2)
+                %If no parental EC50s, cell2mat doesn't work right so
+                %hardcoding a solution...
+                if sum(size(cell2mat(parentalEC50Measurements(2:end,:))) == [0,0]) == 2
+                    parentalEC50Measurements = num2cell(nan(size(parentalEC50Measurements)));
+                end
+
                 [h{drugRow,cellLineColumn},p{drugRow,cellLineColumn}] = ttest2(currentEC50s(:,cellLine),cell2mat(parentalEC50Measurements(2:end,:)),'Alpha',newAlpha(alpha));
                 
                 if strcmp(cellLines{cellLine},'Parental')
+                    continue;
+                elseif isnan(cell2mat(h(drugRow,cellLineColumn)))
                     continue;
                 elseif cell2mat(h(drugRow,cellLineColumn))
                     stars{drugRow,cellLineColumn} = (repmat('*',[1,alpha]));
@@ -95,7 +103,7 @@ function [h,p,stars] = barPlotsEC50s(dataAfterFit,folder)
         lb = [xt'-ones(size(currentEC50s,2),1)*0.2,  xt'+ones(size(currentEC50s,2),1)*0.2];                     % Long Bar X
 
         set(gcf,'visible','off')
-        plot(xt, currentEC50s, 'o', 'MarkerEdgeColor','k','MarkerFaceColor', 'k','MarkerSize',3)
+        plot(xt, currentEC50s', 'o', 'MarkerEdgeColor','k','MarkerFaceColor', 'k','MarkerSize',3)
         hold on
         for k1 = 1:size(currentEC50s,2)
             plot(lb(k1,:), [1,1]*dmean(k1),'-k',...
@@ -113,12 +121,18 @@ function [h,p,stars] = barPlotsEC50s(dataAfterFit,folder)
         xlabel('Cell Lines')
         ylabel('EC50 (uM)')
         title(drugs{drug})
+        
+        %If all drug/cell line combos were not fit, just skip this drug.
+        if isnan(range(range(currentEC50s)))
+            continue
+        end
+        
         if range(range(currentEC50s))
             maxY = max(max(currentEC50s)) + 0.1*range(range(currentEC50s));
             minY = min(min(currentEC50s)) - 0.1*range(range(currentEC50s));
         else
-            maxY = max(currentEC50s) + 0.1*range(currentEC50s);
-            minY = min(currentEC50s) - 0.1*range(currentEC50s);
+            maxY = max(max(currentEC50s)) + 0.1*nanmean(nanmean(currentEC50s));
+            minY = min(min(currentEC50s)) - 0.1*nanmean(nanmean(currentEC50s));
         end
         
         axis([0,size(cellLines,1)+1,minY,maxY])

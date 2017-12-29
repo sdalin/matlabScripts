@@ -15,11 +15,44 @@ directory = pwd;
 bigstructNormed = struct;
 %this is going to be a nested struct containing ALL the data.  First level
 %is different days of data collection.  Second level is separate plates on each day and one plate with 'info' ie, drug names and concentrations.
-folderName = sprintf('%s/Raw Data weeks of 161118 170213 170227 170313/',directory);
-list=dir(sprintf('%s*.xlsx',folderName));
+folderName = sprintf('%s/Raw Data/',directory);
+list=dir(sprintf('%s*.csv',folderName));
+
+%% The following is for cases where each plate is one csv file and there is a directory linking assay & compound plate barcodes 
+
+%Read in drug names, KI numbers, and targets into bigstructNormed.Info
+infoFileName = dir(sprintf('%s/KI-HTS.Selleck.384wellarray.20141007.xlsx',directory));
+[num,drugData,raw] = xlsread(infoFileName.name,'Chemical Data','A2:F393');
+bigstructNormed.Info = [drugData(:,1:2),drugData(:,5)];
+
+%Read in the cell line/assay plate barcode/compound plate barcode data
+directoryFileName = dir(sprintf('%s/Simona_Selleck_20171218.xlsx',directory));
+[num,cellLinePlateCompoundBarcodes,raw] = xlsread(directoryFileName.name,'Sheet1','A2:D61');
+
+%Read in each assay plate layout & drug concentrations
+%Find number of assay plates
+[status,sheets] = xlsfinfo(infoFileName.name);
+numOfAssayPlates = numel(sheets) - 1;
+
+for assayPlate = 2:numOfAssayPlates+1
+    %Grab the doses
+    [num,text,doses] = xlsread(infoFileName.name,sheets{numOfAssayPlates},'B21:Y37');
+    
+    %Store doses in bigstructNormed.Info
+    bigstructNormed.Directory.(sheets{numOfAssayPlates}).doses = doses;
+    
+    %Grab the drugNames
+    [num,drugNames,raw] = xlsread(infoFileName.name,sheets{numOfAssayPlates},'B4:Y19');
+    
+    %Store drug names in BigstructNormed.Info
+    bigstructNormed.Directory.(sheets{numOfAssayPlates}).drugNames = drugNames;
+end
+    
+%%
+
 for i = 1:length(list);
     filename = sprintf('%s%s',folderName,list(i).name);
-    bigstructNormed.(sprintf('date%s',filename(end-14:end-9))) = ReadNormPlateReaderDRCData(filename);
+    bigstructNormed.(list(i).name(1:end-5)) = ReadNormPlateReaderHTSDRCData(filename,cellLinePlateCompoundBarcodes,bigstructNormed.Directory);
 end
 
 %Get fits of all raw data in this folder  
@@ -40,11 +73,11 @@ end
 
 %Calculate fits of individual data, all replicates, and put graphs of individual fits in the
 %folder above.
-[drugsCellLinesThisFolder] = hillFitAll(bigstructNormed,folderName);
+[drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName);
 
 %Calculate all Log2FC's
 load('dataAfterFit','dataAfterFit');
-[dataAfterFit] = calcLog2FC(dataAfterFit);
+[dataAfterFit] = calcLog2FCHTS(dataAfterFit);
 save('dataAfterFit','dataAfterFit')
 
 %Make bar plot of raw EC50s with stderr bars, and a dotted horizontal line
@@ -59,8 +92,8 @@ save('dataAfterFit','dataAfterFit')
 [heatmapMatrixCis,cellLinesCis,drugsCleanedCis] = heatmapFromLog2FCs(dataAfterFit,folderName,stars,'Cis');
 
 %Make DRC plots for each drug with all cell lines in this particular folder
-load(sprintf('%s/Raw Data weeks of 161118 170213 170227 170313/matlabOutput/drugsCellLinesThisFolder',directory));
-replicateDrugDRCPlots(dataAfterFit,drugsCellLinesThisFolder,folderName);
+load(sprintf('%s/Raw Data/matlabOutput/drugsCellLinesThisFolder',directory));
+replicateDrugDRCPlotsHTS(dataAfterFit,drugsCellLinesThisFolder,folderName);
 
 
 
