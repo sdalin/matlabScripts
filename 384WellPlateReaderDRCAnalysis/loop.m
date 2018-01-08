@@ -36,23 +36,23 @@ numOfAssayPlates = numel(sheets) - 1;
 
 for assayPlate = 2:numOfAssayPlates+1
     %Grab the doses
-    [num,text,doses] = xlsread(infoFileName.name,sheets{numOfAssayPlates},'B21:Y37');
+    [num,text,doses] = xlsread(infoFileName.name,sheets{assayPlate},'B21:Y36');
     
     %Store doses in bigstructNormed.Info
-    bigstructNormed.Directory.(sheets{numOfAssayPlates}).doses = doses;
+    bigstructNormed.Directory.(sheets{assayPlate}).doses = doses;
     
     %Grab the drugNames
-    [num,drugNames,raw] = xlsread(infoFileName.name,sheets{numOfAssayPlates},'B4:Y19');
+    [num,drugNames,raw] = xlsread(infoFileName.name,sheets{assayPlate},'B4:Y19');
     
     %Store drug names in BigstructNormed.Info
-    bigstructNormed.Directory.(sheets{numOfAssayPlates}).drugNames = drugNames;
+    bigstructNormed.Directory.(sheets{assayPlate}).drugNames = drugNames;
 end
     
 %%
 
 for i = 1:length(list);
     filename = sprintf('%s%s',folderName,list(i).name);
-    bigstructNormed.(list(i).name(1:end-5)) = ReadNormPlateReaderHTSDRCData(filename,cellLinePlateCompoundBarcodes,bigstructNormed.Directory);
+    bigstructNormed.(list(i).name(7:16)) = ReadNormPlateReaderHTSDRCData(filename,cellLinePlateCompoundBarcodes,bigstructNormed.Directory);
 end
 
 %Get fits of all raw data in this folder  

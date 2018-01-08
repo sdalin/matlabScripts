@@ -87,6 +87,8 @@ function [drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName)
     for experiment = 1:size(experiments,1)
         if strcmp(experiments{experiment},'Info')
             continue
+        elseif strcmp(experiments{experiment},'Directory')
+            continue
         end
         
         drugs = unique(bigstructNormed.(experiments{experiment}).Info.drugNames);
@@ -104,6 +106,8 @@ function [drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName)
             %Find actual drug name
             if sum(strcmp(drugs{drug},bigstructNormed.Info(:,1)))
                 wheredrug = strcmp(drugs{drug},bigstructNormed.Info(:,1));
+                %Remove any charachters that make the drug name an invalid
+                %field name
                 drugName = bigstructNormed.Info(wheredrug,2);
                 drugName = strrep(drugName,' ','_');
                 drugName = strrep(drugName,'-','');
@@ -112,8 +116,9 @@ function [drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName)
                 drugName = strrep(drugName,')','');
                 drugName = char(drugName);
             else
-                drugName = drugs{drug};
+                drugName = drugs{drug};     
             end
+            
             
             if isfield(dataAfterFit.fitParams,sprintf('drug_%s',drugName)) && sum(strcmp(dataAfterFit.fitParams.(sprintf('drug_%s',drugName)).EC50(:,1),experiments{experiment}))==0
                 dataAfterFit.fitParams.(sprintf('drug_%s',drugName)).EC50 = [dataAfterFit.fitParams.(sprintf('drug_%s',drugName)).EC50;cell(1,size(dataAfterFit.fitParams.(sprintf('drug_%s',drugName)).EC50,2))];
@@ -133,6 +138,8 @@ function [drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName)
     for experiment = 1:size(experiments,1)
         if strcmp(experiments{experiment},'Info')
             continue
+        elseif strcmp(experiments{experiment},'Directory')
+            continue
         end
         
         cellLines = fieldnames(bigstructNormed.(experiments{experiment}));
@@ -149,7 +156,7 @@ function [drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName)
         fitParams = struct; 
         
         for cellLine = 1:size(cellLines,1)
-            if ~strcmp(cellLines{cellLine},'Info')
+            if ~(strcmp(cellLines{cellLine},'Info')) && ~(strcmp(cellLines{cellLine},'Directory'))
                 
                 %Indicate this cell line is in this folder
                 if sum(strcmp(drugsCellLinesThisFolder(2,:),cellLines{cellLine})) < 1
@@ -164,10 +171,16 @@ function [drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName)
                 drugs = drugs(~strcmp(drugs,'EMPTY'));                
                 
                 for drug = 1:size(drugs,1)
+                   
+                    experiment
+                    drug
+                    cellLine
                     
                     %Find actual drug name
                     if sum(strcmp(drugs{drug},bigstructNormed.Info(:,1)))
                         wheredrug = strcmp(drugs{drug},bigstructNormed.Info(:,1));
+                        %Remove any charachters that make the drug name an invalid
+                        %field name
                         drugName = bigstructNormed.Info(wheredrug,2);
                         drugName = strrep(drugName,' ','_');
                         drugName = strrep(drugName,'-','');
@@ -273,8 +286,8 @@ function [drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName)
                         plotIndividualCellLines(fittedHill{cellLine},fittedHillNoOutliers{cellLine},currentConcs,thisCellLine,outliers,gofNoOutliers{cellLine}.rsquare,drugName,cellLines{cellLine},experiments{experiment},folderName,skipToNextDrug);
 
                         %save the fit object and gof into dataAfterFit
-                        fitObj.IndFit.(drugName).(sprintf('%s_%s',cellLines{cellLine},experiments{experiment})) = fittedHillNoOutliers{cellLine};
-                        gofObj.IndFit.(drugName).(sprintf('%s_%s',cellLines{cellLine},experiments{experiment})) = gofNoOutliers{cellLine};
+                        fitObj.IndFit.(sprintf('drug_%s',drugName)).(sprintf('%s_%s',cellLines{cellLine},experiments{experiment})) = fittedHillNoOutliers{cellLine};
+                        gofObj.IndFit.(sprintf('drug_%s',drugName)).(sprintf('%s_%s',cellLines{cellLine},experiments{experiment})) = gofNoOutliers{cellLine};
 
                         %Indicate this drug/cell line was fit
                         dataFit{end+1} = sprintf('drug_%s_%s_%s',drugName,cellLines{cellLine},experiments{experiment});
@@ -311,7 +324,7 @@ function [drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName)
                     
                     %Now extract the EC50 of each cell line/drug into the fitParams field of dataAfterFit
                     if ~skipToNextDrug
-                        currentEC50 = fitObj.IndFit.(drugName).(sprintf('%s_%s',cellLines{cellLine},experiments{experiment})).IC50;
+                        currentEC50 = fitObj.IndFit.(sprintf('drug_%s',drugName)).(sprintf('%s_%s',cellLines{cellLine},experiments{experiment})).IC50;
                    
                     else
                         currentEC50 = [];
@@ -320,20 +333,20 @@ function [drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName)
                     %Store the EC50 into the row/column corresponding to the
                     %experiment/cellLine
                     
-                    if ~isfield(fitParams,drugName)
-                        fitParams.(drugName).EC50 = cell(0);
+                    if ~isfield(fitParams,sprintf('drug_%s',drugName))
+                        fitParams.(sprintf('drug_%s',drugName)).EC50 = cell(0);
                     end
                     
-                    [row,column] = find(strcmp(fitParams.(drugName).EC50,sprintf('%s',cellLines{cellLine})));
+                    [row,column] = find(strcmp(fitParams.(sprintf('drug_%s',drugName)).EC50,sprintf('%s',cellLines{cellLine})));
                     
                     %If that cell line has no data yet, add new column with
                     %cell line name and EC50
                     if isempty(row)
-                        cellLineAndEC50 = cell(size(fitParams.(drugName).EC50,1),1);
+                        cellLineAndEC50 = cell(size(fitParams.(sprintf('drug_%s',drugName)).EC50,1),1);
                         row = 2;
                         cellLineAndEC50(1) = {sprintf(cellLines{cellLine})};
                         cellLineAndEC50(row) = {currentEC50};
-                        fitParams.(drugName).EC50(:,size(fitParams.(drugName).EC50,2)+1) = cellLineAndEC50;
+                        fitParams.(sprintf('drug_%s',drugName)).EC50(:,size(fitParams.(sprintf('drug_%s',drugName)).EC50,2)+1) = cellLineAndEC50;
                     end
                     
                 end
@@ -399,15 +412,15 @@ function [drugsCellLinesThisFolder] = hillFitAllHTS(bigstructNormed,folderName)
             cellLines = fitParams.(drugs{drug}).EC50(1,1:end);
             
             for cellLine = 1:size(cellLines,2)
-                [row,column] = find(strcmp(dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).EC50,(cellLines{cellLine})));
+                [row,column] = find(strcmp(dataAfterFit.fitParams.(drugs{drug}).EC50,(cellLines{cellLine})));
                 
                 if isempty(row)
-                    [row,tmp] = find(strcmp(dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).EC50,(experiments{experiment})));
-                    dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).EC50(1,end+1) = {sprintf(cellLines{cellLine})};
-                    dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).EC50(row,end) = fitParams.(drugs{drug}).EC50(2,cellLine);
+                    [row,tmp] = find(strcmp(dataAfterFit.fitParams.(drugs{drug}).EC50,(experiments{experiment})));
+                    dataAfterFit.fitParams.(drugs{drug}).EC50(1,end+1) = {sprintf(cellLines{cellLine})};
+                    dataAfterFit.fitParams.(drugs{drug}).EC50(row,end) = fitParams.(drugs{drug}).EC50(2,cellLine);
                 else
-                    [row,tmp] = find(strcmp(dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).EC50,(experiments{experiment})));
-                    dataAfterFit.fitParams.(sprintf('drug_%s',drugs{drug})).EC50(row,column) = fitParams.(drugs{drug}).EC50(2,cellLine);
+                    [row,tmp] = find(strcmp(dataAfterFit.fitParams.(drugs{drug}).EC50,(experiments{experiment})));
+                    dataAfterFit.fitParams.(drugs{drug}).EC50(row,column) = fitParams.(drugs{drug}).EC50(2,cellLine);
                 end
             end
         end

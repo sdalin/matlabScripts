@@ -20,43 +20,31 @@
 function [bigstructNormed] = ReadNormPlateReaderHTSDRCData(filename,cellLinePlateCompoundBarcodes,Directory)
 
 %% Start by extracting the meta-data and raw-data from the excel files
-    %Find number of sheets in the excel file 'filename'
-    [status,sheets] = xlsfinfo(filename);
-    numOfSheets = numel(sheets);
-    
-    %for each experiment, import raw fluorescence data and cell line name from all data sheets of filename .xls file
-    %and import the drug and concentration information into a field
-    %called 'Info'
-    for sheet = 1:numOfSheets
-        if strcmp(sheets{sheet},'Dose')
-            %Grab the doses
-            [num,text,doses] = xlsread(filename,'Dose','B24:Y39');
-            
-            %Store doses in bigstructNormed.Info
-            bigstructNormed.Info.doses = doses;
-            
-        elseif strcmp(sheets{sheet},'Drugs')
-            %Grab the drugNames
-            [num,drugNames,raw] = xlsread(filename,'Drugs','B24:Y39');
-            
-            %Store drug names in BigstructNormed.Info
-            bigstructNormed.Info.drugNames = drugNames;
-            
-        else
-            %Grab the raw data from this sheet
-            [num,text,cellRawFluorescence] = xlsread(filename, sprintf('%s',sheets{sheet}), 'B2:17');
-            removeOVERs = cellRawFluorescence;
-            removeOVERs(find(strcmp(cellRawFluorescence,'OVER'))) = {NaN};    
-            rawFluorescence = cell2mat(removeOVERs);
-            %Grab the cell line name from this sheet
-            [num,cellLine,raw] = xlsread(filename,sheet,'E12');
-            cellLine = strrep(cellLine,' ','_');
-            cellLine = strrep(cellLine,',','');
-            bigstruct.(sprintf('%s',char(cellLine))) = rawFluorescence;
-        end
-    end
 
-%% Remove background fluorescence (no need with luminescence?  Or at least, there are no wells without cells!    
+    %Grab the raw data from this sheet
+    [rawFluorescence] = csvread(filename,1,1,['B2..Y17']);
+    
+    %Find the compound plate barcode from the assay plate barcode
+    assayBarcode = filename(111:120);
+    assayIndex = strcmp(cellLinePlateCompoundBarcodes,assayBarcode);
+    compoundBarcode = char(cellLinePlateCompoundBarcodes(assayIndex(:,2),4));
+    
+    %Find the doses & drug names from this compound plate & store into
+    %bigstructNormed
+    [doses] = Directory.(compoundBarcode).doses;
+    [drugNames] = Directory.(compoundBarcode).drugNames;
+    bigstructNormed.Info.drugNames = drugNames;
+    bigstructNormed.Info.doses = doses;
+    
+    %Grab the cell line name from the compound plate barcode
+    cellLineIndex = strcmp(cellLinePlateCompoundBarcodes,assayBarcode);
+    cellLine = cellLinePlateCompoundBarcodes(cellLineIndex(:,2),1);
+    cellLine = strrep(cellLine,' ','_');
+    cellLine = strrep(cellLine,',','');
+    bigstruct.(char(cellLine)) = rawFluorescence;
+
+
+%% Remove background fluorescence (no need with luminescence?  Or at least, there are no wells without cells!
 %     %For each plate, remove background fluorescence in each column by
 %     %subtraction the median of column 23, which had no cells, store in bigstructNormed.
 %     for cellLine = 1:size(fieldnames(bigstruct),1)
